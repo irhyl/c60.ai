@@ -1,0 +1,6 @@
+openai
+python-dotenv
+subprocess
+pathlib
+json
+markdown

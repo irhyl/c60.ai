@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 51. Begin Phase 2: LLM reasoning and causal constraint logic.
 Create /llm_reasoning/ directory. This phase adds reasoning-driven pipeline generation using LLMs. Begin by creating reasoning_driver.py, which takes a dataset fingerprint and outputs high-level decisions like "likely imbalanced," "requires PCA," etc. The first version will use templated rules and later integrate OpenAI or local LLMs. Document this architecture and intent in /notebooks/46_phase2_intro.ipynb.
 

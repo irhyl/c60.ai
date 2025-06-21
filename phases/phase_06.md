@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 141. Start Phase 06: Optimization, Stress Testing & Final Publication.
 Create /phase6_optimization/README.md to outline this final phase: system-wide optimization, large-scale testing, reproducibility, and publishing. Prepare summary notebook /notebooks/133_phase6_intro.ipynb explaining performance, interpretability, CI/CD, and release goals.
 

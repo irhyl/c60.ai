@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 121. Start Phase 05: Generative Intelligence & Self-Assembly.
 Create /phase5_generative/README.md describing the goal: develop agents that autonomously generate novel pipeline graphs based on high-level intent, with no dataset as input. Launch /notebooks/114_phase5_intro.ipynb to set the theoretical context: language → graph → performance trajectory.
 

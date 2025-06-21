@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 161. Begin Phase 07: Strategic Extensions & Enterprise Readiness.
 Create /phase7_scaling/README.md summarizing this final sprint: large-scale stress validation, neural compression, meta-learning, and enterprise support. Prepare index notebook /notebooks/148_phase7_intro.ipynb outlining objectives.
 

@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 01. Start Phase 04: AutoCausal + Reinforcement Scaling.
 Create a new folder /phase4_autocausal/. This phase focuses on causal reinforcement learning, knowledge graph synthesis, and scalable policy evolution. Begin with /phase4_autocausal/README.md outlining the goal: “Intelligently evolve causal-compliant pipelines with feedback-guided agents.” Set up /notebooks/95_phase4_overview.ipynb to narrate scope.
 

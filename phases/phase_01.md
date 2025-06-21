@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 Phase 1: Project Setup & Design (Steps 1–50)
 
 1. Define C60.ai's core vision and identity.

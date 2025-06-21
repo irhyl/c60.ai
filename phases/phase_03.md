@@ -1,3 +1,5 @@
+Always wrap code in triple backticks with language specified.
+
 91. Build multi-modal dataset handler.
 In /engine/multimodal_loader.py, support loading datasets with text, image, and tabular modalities. Use HuggingFace datasets, torchvision, and pandas together. Implement load_multimodal(dataset_id) function. Normalize and align modalities across samples. Store metadata in multimodal_manifest.json. Showcase pipeline construction with multi-modal features in /notebooks/86_multimodal_intro.ipynb.
 
