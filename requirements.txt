@@ -1,6 +1,4 @@
 openai
 python-dotenv
-subprocess
-pathlib
-json
+requests
 markdown
