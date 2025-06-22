@@ -1,3 +1,11 @@
+# Virtual Environment
+venv/
+ENV/
+.c60_venv/
+c60_venv/
+.env
+.venv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
