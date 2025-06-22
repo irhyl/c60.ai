@@ -1,4 +1,4 @@
-# 🚀 C60.ai - Next-Gen AutoML Framework
+# C60.ai - nothin', just a cool AutoML Framework
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -6,7 +6,7 @@
 
 C60.ai is a high-performance AutoML framework that combines evolutionary algorithms with modern machine learning techniques to automate and optimize the entire ML pipeline development process. Designed with scalability and flexibility in mind, it's perfect for both research and production use cases.
 
-## 🎯 Key Features
+## Key Features
 
 - **Evolutionary Pipeline Optimization**
   - Molecular graph-based pipeline representation
@@ -32,7 +32,7 @@ C60.ai is a high-performance AutoML framework that combines evolutionary algorit
   - Type hints throughout
   - Pre-commit hooks
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -101,17 +101,10 @@ Check out our comprehensive examples in the `examples/` directory:
 2. [Regression Example](examples/regression.ipynb)
 3. [Implementation Walkthrough](examples/implementation_walkthrough.ipynb)
 
-## 📚 Documentation
+## Documentation
 
-For comprehensive documentation, including API reference and advanced usage, please visit our [documentation site](https://c60-ai.readthedocs.io/).
+For comprehensive documentation, including API reference and advanced usage, please visit our [documentation site](coming soon).
 
-## 🤝 Contributing
-
-We welcome contributions from the community! Here's how you can help:
-
-1. **Report bugs** - Open an issue with detailed reproduction steps
-2. **Suggest features** - Share your ideas for improvements
-3. **Submit pull requests** - Follow our [contribution guidelines](CONTRIBUTING.md)
 
 ### Development Setup
 
@@ -131,18 +124,18 @@ black .
 flake8
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
 
-## 📬 Contact
+## Contact
 
-For questions or feedback, please open an issue or reach out to [your.email@example.com](mailto:your.email@example.com).
+For questions or feedback, please open an issue or reach out to aditirkrishna@gmail.com
 
 ---
 
-Made with ❤️ by Your Name | 2023
+built with ❤️ by aditi ramakrishnan | 2025
 
 ## Cite
 
-If you use C60.ai in your research, please cite our paper (coming soon).
+If you use C60.ai in your research, please cite my paper (coming soon).
