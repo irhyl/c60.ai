@@ -5,8 +5,8 @@ This module contains unit tests for the graph validation logic.
 """
 
 import pytest
-from engine.graph_schema import PipelineGraph
-from engine.graph_validator import GraphValidator
+from c60.engine.graph_schema import PipelineGraph
+from c60.engine.graph_validator import GraphValidator
 
 
 def test_validate_graph_structure():

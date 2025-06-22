@@ -9,8 +9,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from engine.search_loop import PipelineMutator, EvolutionarySearch
-from engine.gnn_predictor import MolecularGNN, MolecularGraphEncoder
+from c60.engine.search_loop import PipelineMutator, EvolutionarySearch
+from c60.gnn.predictor import MolecularGNN
+from c60.gnn.pipeline_to_graph import MolecularGraphEncoder
 
 
 class TestPipelineMutator(unittest.TestCase):

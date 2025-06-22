@@ -5,7 +5,7 @@ This module contains unit tests for the DAG-based pipeline graph schema.
 """
 
 import pytest
-from engine.graph_schema import Node, Edge, DAG
+from c60.engine.graph_schema import Node, Edge, DAG
 
 
 def test_node_creation():

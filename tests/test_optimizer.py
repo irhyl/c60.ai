@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch, call
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from c60.core.optimizer import PipelineOptimizer
+from c60.engine.optimizer import PipelineOptimizer
 
 
 class TestPipelineOptimizer:

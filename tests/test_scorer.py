@@ -8,8 +8,8 @@ import pytest
 import numpy as np
 import pandas as pd
 from unittest.mock import MagicMock
-from engine.scorer import PipelineScorer
-from engine.graph_schema import PipelineGraph
+from c60.engine.scorer import PipelineScorer
+from c60.engine.graph_schema import PipelineGraph
 
 
 class TestPipelineScorer:
