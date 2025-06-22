@@ -1,0 +1,60 @@
+# Include the README file
+include README.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include LICENSE
+
+# Include the py.typed file
+include c60/py.typed
+
+# Include package data
+recursive-include c60 *.pyi
+
+# Include documentation
+recursive-include docs *
+
+# Include tests
+recursive-include tests *.py
+
+# Include examples
+recursive-include examples *
+
+# Exclude build and cache files
+global-exclude __pycache__
+global-exclude *.py[cod]
+*$py.class
+global-exclude .DS_Store
+
+# Exclude virtual environment
+exclude .venv/*
+
+# Exclude IDE specific files
+.exclude .vscode/*
+.exclude .idea/*
+
+# Exclude testing and coverage files
+.exclude .coverage
+.exclude htmlcov/*
+.exclude .pytest_cache/*
+
+# Exclude distribution and build files
+exclude dist/*
+exclude build/*
+
+# Exclude development configuration files
+exclude .pre-commit-config.yaml
+exclude .flake8
+exclude .coveragerc
+exclude .gitignore
+exclude .gitattributes
+exclude .editorconfig
+exclude .python-version
+exclude .python-version.*
+
+# Exclude system files
+exclude .DS_Store
+exclude Thumbs.db
+exclude desktop.ini
+
+# Exclude Jupyter notebook checkpoints
+exclude **/.ipynb_checkpoints/*
