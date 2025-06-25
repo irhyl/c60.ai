@@ -1,8 +1,8 @@
 """
 Pipeline generation module for the C60.ai framework.
 
-This module provides functionality for generating machine learning pipelines
-using various strategies and heuristics.
+Defines the PipelineGenerator class and utilities for generating machine learning pipelines
+using various strategies and heuristics in C60.ai.
 """
 
 from typing import Dict, List, Tuple, Union, Optional, Any, Callable
@@ -15,8 +15,7 @@ from sklearn.preprocessing import (
 )
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import (
-    SelectKBest, SelectPercentile, f_classif, f_regression, 
-    mutual_info_classif, mutual_info_regression, RFE, RFECV
+    SelectKBest, f_classif, mutual_info_classif, mutual_info_regression, RFE, RFECV
 )
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.ensemble import (
