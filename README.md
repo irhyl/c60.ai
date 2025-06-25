@@ -207,4 +207,4 @@ If you use C60.ai in your research, please cite my paper (coming soon).
 
 ---
 
-    _built with ❤️ by aditi ramakrishnan | 2025_
+_built with ❤️ by aditi ramakrishnan | 2025_
