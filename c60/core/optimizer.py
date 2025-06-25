@@ -1,8 +1,8 @@
 """
-Optimization module for the C60.ai framework.
+Optimizer module for the C60.ai framework.
 
-This module provides functionality for optimizing machine learning models
-and pipelines using various optimization strategies.
+Defines the Optimizer class for hyperparameter and feature selection optimization
+using Optuna and other strategies in C60.ai.
 """
 
 from typing import Dict, List, Tuple, Union, Optional, Any, Callable
