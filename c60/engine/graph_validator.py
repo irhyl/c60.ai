@@ -1,11 +1,11 @@
 """
-Graph validation utilities for the C60 AutoML framework.
+Graph validator utilities for the C60.ai framework.
 
-This module provides functionality for validating pipeline graphs to ensure they
-are properly structured and can be executed.
+Defines functions for validating graph schemas and pipeline DAGs in C60.ai.
 """
 
-from typing import Dict, List, Tuple, Optional, Any, Set
+import networkx as nx
+from typing import Any, Dict, List, Optional, Set
 from .graph_schema import Node, Edge, DAG
 
 
