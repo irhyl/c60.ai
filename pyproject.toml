@@ -76,20 +76,20 @@ c60 = "c60.cli:main"
 Homepage = "https://github.com/yourusername/c60.ai"
 Documentation = "https://c60.ai/docs"
 Repository = "https://github.com/yourusername/c60.ai"
-Bug Tracker = "https://github.com/yourusername/c60.ai/issues"
+BugTracker = "https://github.com/yourusername/c60.ai/issues"
+
 
 [tool.setuptools]
 package-dir = { "" = "." }
-packages = ["c60", "c60.core"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["c60/*", "c60/core/*"]
+include = ["c60*", "c60/core*"]
 
 [tool.black]
 line-length = 88
 target-version = ['py38']
-include = '\.pyi?$'
+include = '\\.pyi?$'
 
 [tool.isort]
 profile = "black"
