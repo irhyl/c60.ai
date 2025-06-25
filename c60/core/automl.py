@@ -1,8 +1,8 @@
 """
 Main AutoML class for the C60.ai framework.
 
-This module contains the AutoML class which serves as the main entry point
-for the AutoML functionality.
+Defines the AutoML class, the main entry point for automated machine learning
+pipeline search, training, and model management in C60.ai.
 """
 
 from typing import Optional, Union, Dict, Any, Tuple
@@ -181,10 +181,12 @@ class AutoML:
         Args:
             path: Path to save the model to.
         """
+        import joblib
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: Implement model serialization
-        
+        joblib.dump(self, path)
+        self.logger.info(f"AutoML model saved to {path}")
+
     @classmethod
     def load(cls, path: Union[str, Path]) -> 'AutoML':
         """
@@ -196,5 +198,9 @@ class AutoML:
         Returns:
             Loaded AutoML instance.
         """
-        # TODO: Implement model deserialization
-        pass
+        import joblib
+        path = Path(path)
+        automl = joblib.load(path)
+        if not isinstance(automl, cls):
+            raise TypeError(f"Loaded object is not an instance of {cls.__name__}")
+        return automl
