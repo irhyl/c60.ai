@@ -1,13 +1,16 @@
 """
-Graph schema definitions for the machine learning pipeline DAG.
+Graph schema utilities for the C60.ai framework.
 
-This module provides classes for representing and manipulating machine learning
-pipelines as directed acyclic graphs (DAGs).
+Defines classes and functions for defining and validating graph schemas
+used in graph-based machine learning pipelines in C60.ai.
 """
+
+import networkx as nx
+from typing import Dict, Any, List, Optional
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, TypeVar
+from typing import TypeVar
 from enum import Enum
 import json
 import networkx as nx
