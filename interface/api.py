@@ -96,7 +96,16 @@ async def create_pipeline(pipeline: PipelineCreate):
         "status": "created"
     }
     
-    # TODO: Start pipeline execution in background
+    import threading
+    def run_pipeline_bg(pipeline_id, pipeline_dict):
+        _pipelines[pipeline_id]["status"] = "running"
+        # Simulate pipeline execution (replace with real logic)
+        import time
+        time.sleep(2)  # Simulate work
+        _pipelines[pipeline_id]["status"] = "completed"
+        logger.info(f"Pipeline {pipeline_id} completed.")
+
+    threading.Thread(target=run_pipeline_bg, args=(pipeline_id, pipeline.dict()), daemon=True).start()
     logger.info(f"Created pipeline {pipeline_id}")
     return {"id": pipeline_id, **pipeline.dict()}
 

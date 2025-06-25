@@ -6,6 +6,13 @@ the C60 AutoML system, including dataset loading, pipeline generation,
 and model training.
 """
 
+"""
+Command-line interface for C60 AutoML system.
+
+This module provides a command-line interface for users to interact with
+C60 AutoML, including dataset loading, pipeline generation, and model training.
+"""
+
 import argparse
 import sys
 from pathlib import Path
@@ -93,12 +100,28 @@ def main(args: Optional[list[str]] = None) -> int:
 
 
 def handle_load_dataset(args) -> int:
-    """Handle dataset loading command."""
+    """
+    Handle the 'dataset load' CLI command.
+    Loads a dataset from a CSV file and optionally validates for missing values.
+
+    Args:
+        args: Parsed CLI arguments with 'filepath' and 'validate' attributes.
+
+    Returns:
+        int: Exit code (0 for success, 1 for error).
+    """
     try:
+        import pandas as pd
         print(f"Loading dataset from {args.filepath}")
-        # TODO: Implement actual dataset loading
+        df = pd.read_csv(args.filepath)
+        print(f"Loaded dataset with shape: {df.shape}")
         if args.validate:
-            print("Validating dataset...")
+            print("Validating dataset for missing values...")
+            missing = df.isnull().sum().sum()
+            if missing > 0:
+                print(f"Warning: Dataset contains {missing} missing values.")
+            else:
+                print("No missing values detected.")
         return 0
     except Exception as e:
         print(f"Error loading dataset: {e}", file=sys.stderr)
@@ -106,11 +129,30 @@ def handle_load_dataset(args) -> int:
 
 
 def handle_generate_pipeline(args) -> int:
-    """Handle pipeline generation command."""
+    """
+    Handle the 'pipeline generate' CLI command.
+    Loads a dataset, trains an AutoML pipeline, and saves the trained model.
+
+    Args:
+        args: Parsed CLI arguments with 'dataset' and 'target' attributes.
+
+    Returns:
+        int: Exit code (0 for success, 1 for error).
+    """
     try:
+        import pandas as pd
+        from c60 import AutoML
         print(f"Generating pipeline for dataset: {args.dataset}")
         print(f"Target column: {args.target}")
-        # TODO: Implement actual pipeline generation
+        df = pd.read_csv(args.dataset)
+        X = df.drop(columns=[args.target])
+        y = df[args.target]
+        automl = AutoML(task='classification')  # TODO: infer task from data or args
+        automl.fit(X, y)
+        print(f"Pipeline generated and trained. Best score: {automl.best_score_}")
+        # Save the best pipeline
+        automl.save('best_automl_pipeline.joblib')
+        print("Saved best pipeline to 'best_automl_pipeline.joblib'")
         return 0
     except Exception as e:
         print(f"Error generating pipeline: {e}", file=sys.stderr)
