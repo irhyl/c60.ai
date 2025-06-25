@@ -59,6 +59,75 @@ pip install -e .
 
 ## 🏁 Quick Start
 
+---
+
+## Command-Line Interface (CLI)
+
+You can interact with C60.ai via the command line:
+
+```bash
+# Load a dataset and validate
+python interface/cli.py dataset load path/to/data.csv --validate
+
+# Generate a pipeline for a dataset
+python interface/cli.py pipeline generate --dataset path/to/data.csv --target target_column
+```
+
+---
+
+## REST API
+
+C60.ai provides a FastAPI-based REST API. To run the API server:
+
+```bash
+uvicorn interface.api:app --reload
+```
+
+### Example API usage (Python):
+```python
+import requests
+# Create a dataset
+resp = requests.post('http://localhost:8000/datasets/', json={
+    'name': 'my-dataset',
+    'file_path': 'path/to/data.csv'
+})
+# Create a pipeline
+resp = requests.post('http://localhost:8000/pipelines/', json={
+    'name': 'my-pipeline',
+    'dataset_id': 'dataset_1',
+    'target_column': 'target'
+})
+```
+
+---
+
+## Model Serialization
+
+You can save and load trained AutoML models:
+
+```python
+from c60 import AutoML
+# ... train your model ...
+automl.save('best_model.joblib')
+# Later, reload it:
+loaded = AutoML.load('best_model.joblib')
+```
+
+---
+
+## Cloud Execution
+
+C60.ai supports simulated cloud/local pipeline execution:
+
+```python
+from interface.cloud_runner import CloudRunner, CloudProvider
+runner = CloudRunner(provider=CloudProvider.LOCAL)
+status = runner.run_pipeline(pipeline_config={"pipeline_id": "test"}, dataset_path="data.csv")
+print(status)
+```
+
+---
+
 ### Basic Usage
 
 ```python
