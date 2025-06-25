@@ -46,6 +46,8 @@ def configure_logging(
         os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
         file_handler = logging.FileHandler(filename, mode=filemode)
         file_handler.setLevel(level)
+        formatter = logging.Formatter(format)
+        file_handler.setFormatter(formatter)
         handlers.append(file_handler)
     
     # Configure root logger
@@ -59,23 +61,28 @@ def configure_logging(
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     """
-    Get a logger with the specified name.
-    
-    If no name is provided, returns the root logger.
-    
+    Return a configured logger for the C60.ai framework.
+
     Args:
-        name: Logger name (usually __name__)
-        
+        name (Optional[str]): Name of the logger. If None, returns the root logger.
+
     Returns:
-        Configured logger instance
+        logging.Logger: Configured logger instance.
     """
-    return logging.getLogger(name)
+    logger = logging.getLogger(name)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
 
 
 def set_log_level(level: int) -> None:
     """
     Set the log level for all handlers of the root logger.
-    
+
     Args:
         level: Logging level (e.g., logging.INFO, logging.DEBUG)
     """
