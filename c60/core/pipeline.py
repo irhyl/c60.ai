@@ -1,8 +1,8 @@
 """
 Pipeline module for the C60.ai framework.
 
-This module defines the Pipeline class which represents a machine learning
-pipeline consisting of multiple processing steps.
+Defines the Pipeline and PipelineStep classes for constructing and managing
+machine learning pipelines in C60.ai.
 """
 
 from typing import List, Dict, Any, Optional, Union, Callable
