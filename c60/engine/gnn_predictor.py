@@ -1,14 +1,18 @@
 """
 Molecular Graph Neural Network for pipeline performance prediction.
 
-This module implements a GNN-based model that operates on molecular graph
-representations of machine learning pipelines.
+GNN predictor module for the C60.ai framework.
+
+Defines the MolecularGNN and supporting classes for graph neural network-based prediction
+in machine learning pipelines in C60.ai.
 """
-from typing import Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool
+from torch_geometric.nn import GCNConv
+from torch_geometric.data import Data
+from typing import Optional, Any, Dict
 
 
 class MolecularGNN(nn.Module):
