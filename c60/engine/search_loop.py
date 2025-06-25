@@ -1,9 +1,9 @@
 """
 Evolutionary search loop for optimizing ML pipelines using molecular GNNs.
 
-This module implements the core evolutionary search algorithm that uses a GNN to guide
-the search for optimal ML pipelines. The search is inspired by molecular evolution,
-where pipelines are treated as molecules that can be mutated and recombined.
+Implements the core evolutionary search algorithm that uses a GNN to guide
+search for optimal machine learning pipelines in C60.ai. Pipelines are treated as
+molecules that can be mutated and recombined, inspired by molecular evolution.
 """
 from typing import List, Dict, Any, Optional, Tuple
 import random
