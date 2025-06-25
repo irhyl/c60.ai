@@ -194,10 +194,14 @@ class Optimizer:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.Series, np.ndarray],
         param_distributions: Dict[str, Any],
+        feature_selection: bool = False,
+        n_features: Optional[int] = None,
+        task_type: str = 'classification',
+        feature_selection_method: str = 'f_classif',
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Optimize a pipeline's hyperparameters.
+        Optimize the entire pipeline including optional feature selection.
         
         Args:
             pipeline: The pipeline to optimize.
@@ -205,11 +209,24 @@ class Optimizer:
             y: Training target values.
             param_distributions: Dictionary with parameters names as keys and distributions
                                or lists of parameters to try.
+            feature_selection: Whether to perform feature selection.
+            n_features: Number of features to select.
+            task_type: Type of task ('classification' or 'regression').
+            feature_selection_method: Feature selection method ('f_classif', 'mutual_info', etc.).
             **kwargs: Additional arguments for the optimization.
-            
         Returns:
-            Dictionary with the best parameters and the optimization study.
+            Dictionary with the best parameters, the optimization study, and selected features if applicable.
         """
+        result = {}
+        X_selected = X
+        # Perform feature selection if requested
+        if feature_selection and n_features is not None:
+            selected_features = self.optimize_feature_selection(
+                X, y, n_features, task_type, feature_selection_method
+            )
+            if isinstance(X, pd.DataFrame):
+                X_selected = X[selected_features]
+            result['selected_features'] = selected_features
         # Convert pipeline parameters to Optuna format
         optuna_params = {}
         for param_name, param_dist in param_distributions.items():
@@ -222,6 +239,52 @@ class Optimizer:
                 for step in pipeline.steps:
                     if hasattr(step.estimator, param_name):
                         optuna_params[f"{step.name}__{param_name}"] = param_dist
-        
         # Run optimization
-        return self.optimize(pipeline, X, y, optuna_params, **kwargs)
+        opt_result = self.optimize(pipeline, X_selected, y, optuna_params, **kwargs)
+        result.update(opt_result)
+        result['feature_selection_performed'] = feature_selection
+        result['n_features_selected'] = n_features if feature_selection else (X.shape[1] if hasattr(X, 'shape') else None)
+        return result
+
+    def optimize_feature_selection(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        n_features: int,
+        task_type: str = 'classification',
+        method: str = 'f_classif'
+    ) -> List[str]:
+        """
+        Select the best features using statistical tests.
+        
+        Args:
+            X: Feature matrix.
+            y: Target vector.
+            n_features: Number of features to select.
+            task_type: Type of task ('classification' or 'regression').
+            method: Feature selection method.
+        Returns:
+            List of selected feature names.
+        """
+        from sklearn.feature_selection import (
+            SelectKBest, f_classif, f_regression, mutual_info_classif, mutual_info_regression
+        )
+        if task_type == 'classification':
+            if method == 'f_classif':
+                selector = SelectKBest(score_func=f_classif, k=n_features)
+            elif method == 'mutual_info':
+                selector = SelectKBest(score_func=mutual_info_classif, k=n_features)
+            else:
+                raise ValueError(f"Unsupported feature selection method: {method}")
+        else:  # regression
+            if method == 'f_regression':
+                selector = SelectKBest(score_func=f_regression, k=n_features)
+            elif method == 'mutual_info':
+                selector = SelectKBest(score_func=mutual_info_regression, k=n_features)
+            else:
+                raise ValueError(f"Unsupported feature selection method: {method}")
+        selector.fit(X, y)
+        selected_indices = selector.get_support(indices=True)
+        if isinstance(X, pd.DataFrame):
+            return X.columns[selected_indices].tolist()
+        return [f"feature_{i}" for i in selected_indices]
