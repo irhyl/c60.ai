@@ -18,11 +18,10 @@ from sklearn.model_selection import cross_validate, KFold, StratifiedKFold
 class Evaluator:
     """
     A class for evaluating machine learning models and pipelines.
-    
-    This class provides methods for evaluating models using various metrics
-    and cross-validation strategies.
+
+    Provides methods for evaluating models using various metrics and cross-validation strategies.
     """
-    
+
     # Default metrics for different task types
     DEFAULT_METRICS = {
         'classification': ['accuracy', 'f1_weighted', 'roc_auc_ovr'],
