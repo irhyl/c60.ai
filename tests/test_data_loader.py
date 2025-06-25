@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from engine.data_loader import load_csv, validate_dataset
+from c60.engine.data_loader import load_csv, validate_dataset
 import os
 
 # Path to the test dataset
