@@ -201,10 +201,10 @@ This project is licensed under the [MIT License](LICENSE).
 
 For questions or feedback, please open an issue or reach out to aditirkrishna@gmail.com
 
----
-
-built with ❤️ by aditi ramakrishnan | 2025
-
 ## Cite
 
 If you use C60.ai in your research, please cite my paper (coming soon).
+
+---
+
+_built with ❤️ by aditi ramakrishnan | 2025_
