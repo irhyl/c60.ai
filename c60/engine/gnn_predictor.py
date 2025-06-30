@@ -109,43 +109,48 @@ class MolecularGNN(nn.Module):
         return self.classifier(x)
 
 
+# --- Clean code: Move component/edge type mappings to module-level constants ---
+# If these lists grow, consider moving them to a config or registry module.
+COMPONENT_TYPES = {
+    # Data preprocessing
+    'imputer': 0,
+    'scaler': 1,
+    'encoder': 2,
+    'feature_selector': 3,
+    # Feature engineering
+    'pca': 10,
+    'kernel_pca': 11,
+    'feature_aggregation': 12,
+    # Models
+    'classifier': 20,
+    'regressor': 21,
+    'clusterer': 22,
+    # Other
+    'other': 99
+}
+
+EDGE_TYPES = {
+    'data_flow': 0,
+    'control_flow': 1,
+    'feature_flow': 2
+}
+
 class MolecularGraphEncoder:
     """
     Encodes ML pipelines into molecular graph representations.
     
     This class handles the conversion of ML pipeline components into a molecular
     graph structure that can be processed by the MolecularGNN.
+    
+    Extension:
+        To add new component or edge types, update the COMPONENT_TYPES and EDGE_TYPES constants at the module level.
+        If these lists grow, consider moving them to a config or registry module.
     """
     
     def __init__(self):
-        # Component type to feature vector mapping
-        self.component_types = {
-            # Data preprocessing
-            'imputer': 0,
-            'scaler': 1,
-            'encoder': 2,
-            'feature_selector': 3,
-            
-            # Feature engineering
-            'pca': 10,
-            'kernel_pca': 11,
-            'feature_aggregation': 12,
-            
-            # Models
-            'classifier': 20,
-            'regressor': 21,
-            'clusterer': 22,
-            
-            # Other
-            'other': 99
-        }
-        
-        # Edge types
-        self.edge_types = {
-            'data_flow': 0,
-            'control_flow': 1,
-            'feature_flow': 2
-        }
+        # Use module-level constants for type mappings
+        self.component_types = COMPONENT_TYPES
+        self.edge_types = EDGE_TYPES
     
     def encode_pipeline(self, pipeline) -> Dict:
         """

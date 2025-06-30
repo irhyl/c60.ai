@@ -5,7 +5,7 @@ Defines functions for validating graph schemas and pipeline DAGs in C60.ai.
 """
 
 import networkx as nx
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 from .graph_schema import Node, Edge, DAG
 
 
@@ -21,6 +21,10 @@ class GraphValidator:
     This class provides methods to validate the structure of pipeline graphs,
     including checking for cycles, disconnected components, and invalid
     node/edge configurations.
+    
+    Extension:
+        To add new validation rules, extend this class with additional _check_* methods.
+        If the set of validation rules grows, consider moving them to a dedicated rules module.
     """
     
     def __init__(self):

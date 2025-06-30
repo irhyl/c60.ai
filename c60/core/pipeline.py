@@ -10,40 +10,42 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.pipeline import Pipeline as SklearnPipeline
+from ..introspect import HybridNode
 
 
 class PipelineStep:
     """
     A single step in a machine learning pipeline.
-    
-    This class encapsulates a transformer or estimator along with its
-    configuration and metadata.
+    Supports hybrid symbolic/neural nodes via HybridNode.
     """
-    
     def __init__(
         self,
         name: str,
-        estimator: Union[BaseEstimator, TransformerMixin],
+        estimator: Union[BaseEstimator, TransformerMixin, HybridNode],
         params: Optional[Dict[str, Any]] = None,
         is_frozen: bool = False
     ):
-        """
-        Initialize a pipeline step.
-        
-        Args:
-            name: Unique name for the step.
-            estimator: The estimator or transformer to use.
-            params: Parameters for the estimator.
-            is_frozen: Whether the step's parameters should be fixed.
-        """
         self.name = name
-        self.estimator = clone(estimator)
-        self.params = params or {}
         self.is_frozen = is_frozen
-        
-        # Set parameters if provided
-        if self.params:
-            self.estimator.set_params(**self.params)
+        self.params = params or {}
+        if isinstance(estimator, HybridNode):
+            self.estimator = estimator
+        else:
+            self.estimator = clone(estimator)
+            if self.params:
+                self.estimator.set_params(**self.params)
+
+    def is_hybrid(self) -> bool:
+        """Return True if this step is a HybridNode (symbolic+neural)."""
+        return isinstance(self.estimator, HybridNode)
+
+    def mutate(self):
+        """Mutate this step if hybrid (demo: swap symbolic/neural)."""
+        if self.is_hybrid():
+            if self.estimator.is_symbolic() and self.estimator.is_neural():
+                self.estimator.symbolic_rule, self.estimator.neural_model = (
+                    self.estimator.neural_model, self.estimator.symbolic_rule)
+        return self
     
     def set_params(self, **params) -> 'PipelineStep':
         """
@@ -79,23 +81,27 @@ class PipelineStep:
 
 class Pipeline:
     """
-    A machine learning pipeline consisting of multiple processing steps.
-    
-    This class extends scikit-learn's Pipeline with additional functionality
-    for AutoML, including step management and metadata tracking.
+    Pipeline supporting hybrid symbolic and neural nodes.
+    Allows mutation/crossover between symbolic and neural steps.
     """
-    
     def __init__(self, steps: Optional[List[PipelineStep]] = None):
-        """
-        Initialize the pipeline.
-        
-        Args:
-            steps: List of pipeline steps.
-        """
         self.steps = steps or []
         self._sklearn_pipeline = None
         self._build_sklearn_pipeline()
         self.metadata = {}
+
+    def mutate(self):
+        """Mutate pipeline: hybrid-aware mutation (mutates hybrid steps)."""
+        for step in self.steps:
+            if hasattr(step, 'mutate'):
+                step.mutate()
+        return self
+
+    def crossover(self, other: 'Pipeline') -> 'Pipeline':
+        """Crossover with another pipeline (swap half steps)."""
+        cut = len(self.steps) // 2
+        new_steps = self.steps[:cut] + other.steps[cut:]
+        return Pipeline(steps=new_steps)
     
     def _build_sklearn_pipeline(self) -> None:
         """Build the underlying scikit-learn pipeline."""

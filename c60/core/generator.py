@@ -40,6 +40,10 @@ class PipelineGenerator:
     
     This class provides methods for generating pipelines using various
     strategies and heuristics.
+    
+    Extension:
+        To add custom models or steps, extend the MODEL_CLASSES dictionary or override methods in a subclass.
+        If the preprocessing/model registries grow, consider moving them to a dedicated registry module.
     """
     
     # Default preprocessing steps

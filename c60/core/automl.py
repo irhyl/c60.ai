@@ -16,6 +16,9 @@ from .pipeline import Pipeline
 from .evaluator import Evaluator
 from .optimizer import Optimizer
 from .generator import PipelineGenerator
+from c60.introspect.introspector import PipelineIntrospector
+from c60.introspect.agents import RLSearchAgent, NASearchAgent
+from c60.introspect.story import PipelineStory
 
 
 class AutoML:
@@ -48,8 +51,9 @@ class AutoML:
         self.metric = metric or self._get_default_metric()
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.config = Config(config or {})
-        
+        self.config = Config()
+        if config:
+            self.config.update(config)
         # Initialize components
         self.logger = get_logger(__name__)
         self.evaluator = Evaluator(task=task, metric=self.metric)
@@ -63,11 +67,21 @@ class AutoML:
             task=task,
             random_state=random_state
         )
-        
+        # Introspector for explainability
+        self.introspector = PipelineIntrospector()
         # State
         self.best_pipeline_ = None
         self.best_score_ = None
         self.history_ = []
+
+    def explain_pipeline(self, pipeline_id: str) -> str:
+        """Return a human-readable explanation/story for a pipeline."""
+        return self.introspector.explain(pipeline_id)
+
+    def pipeline_story(self, pipeline, pipeline_id: str) -> str:
+        """Return a Markdown story for a pipeline's evolution and structure."""
+        story = PipelineStory(pipeline, self.introspector)
+        return story.to_markdown(pipeline_id)
     
     def _get_default_metric(self) -> str:
         """Get the default metric based on the task type."""

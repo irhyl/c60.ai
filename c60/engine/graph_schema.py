@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Graph schema utilities for the C60.ai framework.
 
@@ -7,8 +8,6 @@ used in graph-based machine learning pipelines in C60.ai.
 
 import networkx as nx
 from typing import Dict, Any, List, Optional
-
-from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TypeVar
 from enum import Enum
@@ -35,6 +34,10 @@ class Node:
         node_type: Type of the node (transformer, estimator, etc.)
         parameters: Dictionary of parameters for the node
         description: Optional description of the node
+    
+    Extension:
+        To add new attributes or node types, extend this dataclass or the NodeType enum.
+        If the set of node types grows, consider moving them to a dedicated registry module.
     """
     node_id: str
     node_type: NodeType
@@ -49,6 +52,10 @@ class Edge:
     Attributes:
         source: ID of the source node
         target: ID of the target node
+    
+    Extension:
+        To add new edge attributes or types, extend this dataclass.
+        If the set of edge types grows, consider moving them to a dedicated registry module.
     """
     source: str
     target: str
@@ -69,7 +76,22 @@ class DAG:
         self.edges: List[Edge] = []
         self._graph: Optional[nx.DiGraph] = None
     
-    def add_node(self, node: Node) -> None:
+    def add_node(self, node_or_id, node_type=None, parameters=None, description=""):
+        """
+        Add a node to the DAG. Supports both (node: Node) and (node_id, node_type, parameters, description) signatures for backward compatibility.
+        """
+        if isinstance(node_or_id, Node):
+            node = node_or_id
+        else:
+            node = Node(
+                node_id=node_or_id,
+                node_type=node_type,
+                parameters=parameters or {},
+                description=description
+            )
+        if node.node_id in self.nodes:
+            raise ValueError(f"Node with ID {node.node_id} already exists")
+        self.nodes[node.node_id] = node
         """Add a node to the DAG.
         
         Args:
@@ -147,7 +169,7 @@ class DAG:
             "nodes": [
                 {
                     "node_id": n.node_id,
-                    "node_type": n.node_type.value,
+                    "node_type": n.node_type.value if hasattr(n.node_type, 'value') else n.node_type,
                     "parameters": n.parameters,
                     "description": n.description
                 }

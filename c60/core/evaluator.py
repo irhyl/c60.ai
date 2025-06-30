@@ -33,19 +33,19 @@ class Evaluator:
         # Classification metrics
         'accuracy': accuracy_score,
         'f1': f1_score,
-        'f1_weighted': lambda y_true, y_pred: f1_score(y_true, y_pred, average='weighted'),
+        'f1_weighted': lambda y_true, y_pred, **kwargs: f1_score(y_true, y_pred, average='weighted'),
         'precision': precision_score,
         'recall': recall_score,
         'roc_auc': roc_auc_score,
-        'roc_auc_ovr': lambda y_true, y_pred: roc_auc_score(y_true, y_pred, multi_class='ovr'),
+        'roc_auc_ovr': lambda y_true, y_pred, **kwargs: roc_auc_score(y_true, y_pred, multi_class='ovr'),
         
         # Regression metrics
         'mse': mean_squared_error,
-        'rmse': lambda y_true, y_pred: np.sqrt(mean_squared_error(y_true, y_pred)),
+        'rmse': lambda y_true, y_pred, **kwargs: np.sqrt(mean_squared_error(y_true, y_pred)),
         'mae': mean_absolute_error,
         'r2': r2_score,
-        'neg_mean_squared_error': lambda y_true, y_pred: -mean_squared_error(y_true, y_pred),
-        'neg_mean_absolute_error': lambda y_true, y_pred: -mean_absolute_error(y_true, y_pred),
+        'neg_mean_squared_error': lambda y_true, y_pred, **kwargs: -mean_squared_error(y_true, y_pred),
+        'neg_mean_absolute_error': lambda y_true, y_pred, **kwargs: -mean_absolute_error(y_true, y_pred),
     }
     
     def __init__(

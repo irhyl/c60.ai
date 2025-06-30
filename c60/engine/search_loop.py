@@ -12,6 +12,9 @@ import torch
 from torch_geometric.data import Data, Batch
 
 from .gnn_predictor import MolecularGNN, MolecularGraphEncoder
+from c60.introspect.introspector import PipelineIntrospector
+from c60.introspect.agents import RLSearchAgent, NASearchAgent
+from c60.introspect.story import PipelineStory
 
 
 class PipelineMutator:
@@ -80,7 +83,10 @@ class EvolutionarySearch:
         n_generations: int = 100,
         mutation_rate: float = 0.1,
         elite_frac: float = 0.1,
-        device: str = 'cpu'
+        device: str = 'cpu',
+        introspector: PipelineIntrospector = None,
+        rl_agent: RLSearchAgent = None,
+        nas_agent: NASearchAgent = None
     ):
         """
         Initialize the evolutionary search.
@@ -102,7 +108,13 @@ class EvolutionarySearch:
         self.elite_frac = elite_frac
         self.device = device
         self.mutator = PipelineMutator(mutation_rate)
-        
+
+        # Introspector
+        self.introspector = introspector or PipelineIntrospector()
+        # RL/NAS agents
+        self.rl_agent = rl_agent
+        self.nas_agent = nas_agent
+
         # Store population and scores
         self.population: List[Dict] = []
         self.scores: List[float] = []
@@ -120,9 +132,14 @@ class EvolutionarySearch:
         base_graph = self.encoder.encode_pipeline(initial_pipeline)
         
         # Create population by mutating the base graph
-        for _ in range(self.population_size):
+        for i in range(self.population_size):
             mutated = self.mutator.mutate(base_graph)
             self.population.append(mutated)
+            self.introspector.log(
+                event_type="initialize_population",
+                pipeline_id=f"gen0_{i}",
+                details={"desc": "Initialized mutated pipeline for generation 0", "mutation": True}
+            )
     
     def evaluate_population(self, X, y) -> None:
         """
@@ -136,14 +153,14 @@ class EvolutionarySearch:
         
         # Convert graphs to PyG Data objects
         data_list = []
-        for graph in self.population:
-            data = Data(
-                x=graph['x'],
-                edge_index=graph['edge_index'],
-                edge_attr=graph['edge_attr'],
-                batch=torch.zeros(graph['x'].size(0), dtype=torch.long)
-            )
+        for idx, g in enumerate(self.population):
+            data = self.encoder.graph_to_data(g)
             data_list.append(data)
+            self.introspector.log(
+                event_type="evaluate_population",
+                pipeline_id=f"gen_eval_{idx}",
+                details={"desc": "Evaluated pipeline in population", "index": idx}
+            )
         
         # Create batch and move to device
         batch = Batch.from_data_list(data_list).to(self.device)
@@ -176,12 +193,18 @@ class EvolutionarySearch:
             # Select the best participant
             best = max(participants, key=lambda x: x[1])
             parents.append(best[0])
+            self.introspector.log(
+                event_type="select_parents",
+                pipeline_id=f"parent_{len(parents)-1}",
+                details={"desc": "Selected parent for next generation", "score": best[1]}
+            )
         
         return parents
     
     def create_next_generation(self, parents: List[Dict]) -> None:
         """
         Create the next generation from the selected parents.
+        If RLSearchAgent or NASearchAgent are provided, use them for mutation/selection.
         
         Args:
             parents: List of parent graphs
@@ -190,17 +213,51 @@ class EvolutionarySearch:
         n_elite = int(self.population_size * self.elite_frac)
         elite_indices = np.argsort(self.scores)[-n_elite:]
         elite = [self.population[i] for i in elite_indices]
+        for idx in elite_indices:
+            self.introspector.log(
+                event_type="elite_retention",
+                pipeline_id=f"elite_{idx}",
+                details={"desc": "Retained elite pipeline for next generation", "score": self.scores[idx]}
+            )
         
-        # Create new population with mutations of parents
         new_population = []
-        
-        # Add elite solutions
         new_population.extend(elite)
         
-        # Add mutated parents
         while len(new_population) < self.population_size:
-            parent = random.choice(parents)
-            child = self.mutator.mutate(parent)
+            if self.rl_agent is not None:
+                # Use RL agent to select mutation action
+                parent_idx = random.randint(0, len(parents)-1)
+                state = str(parents[parent_idx])
+                action = self.rl_agent.select_action(state)
+                # For demo: action is just a mutation rate or type
+                child = self.mutator.mutate(parents[parent_idx])
+                reward = self.scores[parent_idx]  # Could be improved
+                next_state = str(child)
+                self.rl_agent.update(state, action, reward, next_state)
+                self.introspector.log(
+                    event_type="rl_mutation",
+                    pipeline_id=f"rl_child_{len(new_population)}",
+                    details={"desc": "RL agent mutated pipeline", "parent": state, "action": str(action), "reward": reward}
+                )
+            elif self.nas_agent is not None:
+                # Use NAS agent to search for new architecture
+                arch = self.nas_agent.search()
+                # For demo: treat arch as a new pipeline graph (mock)
+                child = parents[0].copy()  # In practice, encode arch
+                child['arch'] = arch
+                self.introspector.log(
+                    event_type="nas_mutation",
+                    pipeline_id=f"nas_child_{len(new_population)}",
+                    details={"desc": "NAS agent generated architecture", "arch": str(arch)}
+                )
+            else:
+                parent = random.choice(parents)
+                child = self.mutator.mutate(parent)
+                self.introspector.log(
+                    event_type="mutation",
+                    pipeline_id=f"child_{len(new_population)}",
+                    details={"desc": "Created mutated child pipeline", "parent": str(parent)}
+                )
             new_population.append(child)
         
         self.population = new_population[:self.population_size]
