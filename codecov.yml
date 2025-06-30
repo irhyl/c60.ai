@@ -1,4 +1,32 @@
+# Codecov configuration for C60.ai
+# Documentation: https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: true  # Only upload if CI passes
+  max_report_age: off  # Keep reports indefinitely
+  notify:
+    after_n_builds: 3  # Start notifying after 3 builds
+    status:
+      project:  # Status checks for project coverage
+        default:
+          target: 80%  # Target coverage percentage
+          threshold: 1%  # Allow 1% decrease in coverage
+      patch:  # Status checks for patch coverage
+        default:
+          target: 70%  # Patch coverage threshold
+          threshold: 1%
+
+comment:
+  layout: "reach, diff, files, flags"  # PR comment layout
+  behavior: default  # Comment on new comments
+  require_changes: true  # Only comment if coverage changes
+  require_base: true  # Only post if base report exists
+  require_head: true  # Only post if head report exists
+
 coverage:
+  precision: 2  # Decimal places for coverage
+  round: down  # Round down coverage numbers
+  range: "70...100"  # Valid coverage range
   status:
     project:
       default:
@@ -7,11 +35,34 @@ coverage:
     patch:
       default:
         target: 70%  # Patch coverage threshold
-  ignore:
-    - "tests/*"  # Ignore test files in coverage
-    - "**/__init__.py"  # Ignore __init__ files
-    - "docs/*"  # Ignore documentation files
-    - "examples/*"  # Ignore example files
-    - "notebooks/*"  # Ignore notebook files
-    - "setup.py"  # Ignore setup files
-    - "*.ipynb"  # Ignore Jupyter notebooks
+        threshold: 1%
+
+ignore:
+  - "tests/*"  # Ignore test files in coverage
+  - "**/__init__.py"  # Ignore __init__ files
+  - "docs/*"  # Ignore documentation files
+  - "examples/*"  # Ignore example files
+  - "notebooks/*"  # Ignore notebook files
+  - "setup.py"  # Ignore setup files
+  - "*.ipynb"  # Ignore Jupyter notebooks
+  - "**/version.py"  # Ignore version files
+
+# Comment these in if you want to track test coverage
+# parsers:
+#   gcov:
+#     branch_detection:
+#       conditional: yes
+#       loop: yes
+#       method: no
+#       macro: no
+
+# Uncomment to enable status checks for specific files/directories
+# coverage:
+#   status:
+#     project:
+#       changes:
+#         - "c60/core/**"
+#         - "c60/engine/**"
+#       default:
+#         target: 80%
+#         threshold: 1%
