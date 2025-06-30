@@ -1,0 +1,17 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%  # Target coverage percentage
+        threshold: 1%  # Allow 1% decrease in coverage
+    patch:
+      default:
+        target: 70%  # Patch coverage threshold
+  ignore:
+    - "tests/*"  # Ignore test files in coverage
+    - "**/__init__.py"  # Ignore __init__ files
+    - "docs/*"  # Ignore documentation files
+    - "examples/*"  # Ignore example files
+    - "notebooks/*"  # Ignore notebook files
+    - "setup.py"  # Ignore setup files
+    - "*.ipynb"  # Ignore Jupyter notebooks
