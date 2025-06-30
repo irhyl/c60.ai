@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 
-from c60.engine.pipeline import Pipeline, PipelineStep
+from c60.core.pipeline import Pipeline, PipelineStep
 
 
 class TestPipeline:

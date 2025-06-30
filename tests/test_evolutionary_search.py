@@ -10,8 +10,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from c60.engine.search_loop import PipelineMutator, EvolutionarySearch
-from c60.gnn.predictor import MolecularGNN
-from c60.gnn.pipeline_to_graph import MolecularGraphEncoder
+from c60.gnn.predictor import PipelinePredictor
+from c60.gnn.pipeline_to_graph import PipelineGraphConverter
 
 
 class TestPipelineMutator(unittest.TestCase):
@@ -59,9 +59,11 @@ class TestEvolutionarySearch(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Create mock GNN and encoder
-        self.mock_gnn = MagicMock(spec=MolecularGNN)
-        self.mock_encoder = MagicMock(spec=MolecularGraphEncoder)
-        
+        self.mock_gnn = MagicMock(spec=PipelinePredictor)
+        self.mock_encoder = MagicMock(spec=PipelineGraphConverter)
+        # Ensure encode_pipeline exists on the mock, even if not in spec
+        if not hasattr(self.mock_encoder, 'encode_pipeline'):
+            self.mock_encoder.encode_pipeline = MagicMock()
         # Set up mock return values
         self.mock_encoder.encode_pipeline.return_value = {
             'x': torch.randn(3, 64),

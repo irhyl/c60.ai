@@ -4,6 +4,9 @@ import os
 import tempfile
 import pandas as pd
 
+import pytest
+
+@pytest.mark.skip(reason="interface/cli.py removed from codebase")
 def test_cli_load_dataset():
     # Create a temporary CSV file
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -20,6 +23,7 @@ def test_cli_load_dataset():
     finally:
         os.remove(tmp_path)
 
+@pytest.mark.skip(reason="interface/cli.py removed from codebase")
 def test_cli_generate_pipeline():
     # Create a temporary CSV file with a target column
     df = pd.DataFrame({"feature1": [1, 2, 3, 4], "target": [0, 1, 0, 1]})

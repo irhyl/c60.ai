@@ -42,6 +42,9 @@ def test_dag_operations():
     node2 = Node("node2", "estimator")
     dag.add_node(node1)
     dag.add_node(node2)
+    # Test duplicate node raises ValueError
+    with pytest.raises(ValueError, match="already exists"):
+        dag.add_node(node2)
     
     # Test adding edge
     edge = Edge("node1", "node2")
