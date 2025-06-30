@@ -1,0 +1,51 @@
+# Pipeline DAG for Legal Document Classification
+nodes:
+  - id: input
+    type: data_loader
+    params:
+      source: data/legal_docs/
+  - id: tokenizer
+    type: nlp_preprocessor
+    params:
+      method: bert_tokenizer
+  - id: embed
+    type: embedder
+    params:
+      model: bert
+  - id: umap
+    type: dimensionality_reducer
+    params:
+      method: UMAP
+      n_components: 5
+  - id: classifier
+    type: classifier
+    params:
+      model: multi_head_attention
+      output: logistic
+  - id: dag_mutator
+    type: dag_mutator
+    params:
+      specialize: transformer_heads
+  - id: distill
+    type: distill_compiler
+    params:
+      compress: true
+  - id: gui
+    type: gui_pipeline_builder
+    params:
+      enable: true
+edges:
+  - from: input
+    to: tokenizer
+  - from: tokenizer
+    to: embed
+  - from: embed
+    to: umap
+  - from: umap
+    to: classifier
+  - from: classifier
+    to: dag_mutator
+  - from: dag_mutator
+    to: distill
+  - from: distill
+    to: gui

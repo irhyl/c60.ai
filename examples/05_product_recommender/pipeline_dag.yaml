@@ -1,0 +1,37 @@
+# Pipeline DAG for Real-Time Product Recommender
+nodes:
+  - id: input
+    type: data_loader
+    params:
+      source: data/clickstream.csv
+  - id: product_graph
+    type: graph_embedder
+    params:
+      method: node2vec
+  - id: hybrid_affinity
+    type: hybrid_affinity
+    params:
+      method: rule+neural
+  - id: online_adapter
+    type: online_adapter
+    params:
+      retrain: true
+  - id: hybrid_induction
+    type: hybrid_induction
+    params:
+      enable: true
+  - id: kg_federation
+    type: kg_federation
+    params:
+      federation: semantic
+edges:
+  - from: input
+    to: product_graph
+  - from: product_graph
+    to: hybrid_affinity
+  - from: hybrid_affinity
+    to: online_adapter
+  - from: online_adapter
+    to: hybrid_induction
+  - from: hybrid_induction
+    to: kg_federation

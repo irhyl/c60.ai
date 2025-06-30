@@ -1,0 +1,65 @@
+# Pipeline DAG for Credit Card Fraud Detection
+nodes:
+  - id: input
+    type: data_loader
+    params:
+      source: data/transactions.csv
+  - id: smote
+    type: imbalance_handler
+    params:
+      method: SMOTE
+  - id: under_sample
+    type: imbalance_handler
+    params:
+      method: under_sampling
+  - id: binarizer
+    type: feature_engineer
+    params:
+      method: auto_binarizer
+  - id: pca
+    type: feature_engineer
+    params:
+      method: PCA
+      n_components: 10
+  - id: tsne
+    type: feature_engineer
+    params:
+      method: TSNE
+      n_components: 2
+  - id: classifier
+    type: classifier
+    params:
+      model: xgboost|lightgbm|svm
+      optimize_metric: f1_score
+  - id: audit
+    type: audit
+    params:
+      explain: true
+      log: audit_logs.csv
+  - id: hybrid_rules
+    type: hybrid_induction
+    params:
+      interpretable: true
+  - id: class_weight
+    type: auto_weights_mutator
+    params:
+      optimize: class_weight
+edges:
+  - from: input
+    to: smote
+  - from: smote
+    to: under_sample
+  - from: under_sample
+    to: binarizer
+  - from: binarizer
+    to: pca
+  - from: pca
+    to: tsne
+  - from: tsne
+    to: classifier
+  - from: classifier
+    to: audit
+  - from: classifier
+    to: hybrid_rules
+  - from: classifier
+    to: class_weight

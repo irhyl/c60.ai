@@ -1,0 +1,63 @@
+# Pipeline DAG for Stock Market Regime Change Detection
+nodes:
+  - id: input
+    type: data_loader
+    params:
+      source: data/ohlcv_macro.csv
+  - id: window
+    type: temporal_window
+    params:
+      window_size: 30
+      stride: 1
+  - id: volatility
+    type: feature_engineer
+    params:
+      method: volatility
+  - id: macd
+    type: feature_engineer
+    params:
+      method: MACD
+  - id: rsi
+    type: feature_engineer
+    params:
+      method: RSI
+  - id: transformer
+    type: classifier
+    params:
+      model: transformer
+      optimize_metric: sharpe_adjusted_accuracy
+  - id: rl_layer
+    type: rl_optimizer
+    params:
+      optimize: sharpe_ratio
+  - id: meta_agent
+    type: meta_dag_agent
+    params:
+      adapt: true
+  - id: quantum_opt
+    type: quantum_dag_opt
+    params:
+      optimize: pipeline_hyperparams
+  - id: online_adapter
+    type: online_adapter
+    params:
+      streaming: true
+edges:
+  - from: input
+    to: window
+  - from: window
+    to: volatility
+  - from: volatility
+    to: macd
+  - from: macd
+    to: rsi
+  - from: rsi
+    to: transformer
+  - from: transformer
+    to: rl_layer
+  - from: rl_layer
+    to: meta_agent
+  - from: meta_agent
+    to: quantum_opt
+  - from: quantum_opt
+    to: online_adapter

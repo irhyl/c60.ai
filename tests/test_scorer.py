@@ -8,12 +8,12 @@ import pytest
 import numpy as np
 import pandas as pd
 from unittest.mock import MagicMock
-from c60.engine.scorer import PipelineScorer
+from c60.core.evaluator import Evaluator
 from c60.engine.graph_schema import PipelineGraph
 
 
-class TestPipelineScorer:
-    """Test suite for the PipelineScorer class."""
+class TestEvaluator:
+    """Test suite for the Evaluator class."""
 
     @pytest.fixture
     def sample_data(self):
@@ -34,14 +34,16 @@ class TestPipelineScorer:
         pipeline.predict_proba.return_value = np.column_stack([
             np.random.rand(100), np.random.rand(100)
         ])
+        # Patch for scikit-learn >=1.3 compatibility
+        pipeline.__sklearn_tags__ = lambda self=None: {}
         return pipeline
 
     def test_score_classification(self, sample_data, mock_pipeline):
         """Test scoring for classification tasks."""
         X, y = sample_data
-        scorer = PipelineScorer(task_type='classification')
+        scorer = Evaluator(task='classification')
         
-        scores = scorer.score(mock_pipeline, X, y)
+        scores = scorer.evaluate(mock_pipeline, X, y)
         
         assert 'accuracy' in scores
         assert 'f1' in scores
@@ -54,9 +56,9 @@ class TestPipelineScorer:
         """Test scoring for regression tasks."""
         X, y = sample_data
         y = y.astype(float)  # Convert to float for regression
-        scorer = PipelineScorer(task_type='regression')
+        scorer = Evaluator(task='regression')
         
-        scores = scorer.score(mock_pipeline, X, y)
+        scores = scorer.evaluate(mock_pipeline, X, y)
         
         assert 'r2' in scores
         assert 'mse' in scores
@@ -66,9 +68,9 @@ class TestPipelineScorer:
     def test_cross_validation(self, sample_data, mock_pipeline):
         """Test cross-validation scoring."""
         X, y = sample_data
-        scorer = PipelineScorer(task_type='classification', cv=3)
+        scorer = Evaluator(task='classification', cv=3)
         
-        scores = scorer.score(mock_pipeline, X, y)
+        scores = scorer.evaluate(mock_pipeline, X, y)
         
         assert 'cv_accuracy' in scores
         assert 'cv_f1' in scores
@@ -82,12 +84,12 @@ class TestPipelineScorer:
         def custom_metric(y_true, y_pred):
             return 0.5  # Dummy metric
             
-        scorer = PipelineScorer(
-            task_type='classification',
+        scorer = Evaluator(
+            task='classification',
             metrics={'custom': custom_metric}
         )
         
-        scores = scorer.score(mock_pipeline, X, y)
+        scores = scorer.evaluate(mock_pipeline, X, y)
         assert 'custom' in scores
         assert scores['custom'] == 0.5
 
@@ -96,8 +98,8 @@ class TestPipelineScorer:
         X, y = sample_data
         mock_pipeline.feature_importances_ = np.array([0.7, 0.3])
         
-        scorer = PipelineScorer(task_type='classification', calculate_feature_importance=True)
-        scores = scorer.score(mock_pipeline, X, y)
+        scorer = Evaluator(task='classification', calculate_feature_importance=True)
+        scores = scorer.evaluate(mock_pipeline, X, y)
         
         assert 'feature_importances' in scores
         assert len(scores['feature_importances']) == 2
@@ -106,4 +108,4 @@ class TestPipelineScorer:
     def test_invalid_task_type(self):
         """Test initialization with invalid task type."""
         with pytest.raises(ValueError, match="Unsupported task type"):
-            PipelineScorer(task_type='invalid_task')
+            Evaluator(task='invalid_task')
