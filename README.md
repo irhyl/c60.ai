@@ -34,6 +34,8 @@ C60.ai is a high-performance AutoML framework that combines evolutionary algorit
 
 ## Installation
 
+**Note:** This project uses `pyproject.toml` as the canonical source for build and dependency configuration. The legacy `setup.cfg` is deprecated and only kept for rare backward compatibility. Always use `pyproject.toml` for installation and packaging tasks.
+
 ### Prerequisites
 
 - Python 3.8+
