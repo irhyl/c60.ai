@@ -3,6 +3,8 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![CI](https://github.com/aditirkrishna/c60.ai/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/aditirkrishna/c60.ai/branch/main/graph/badge.svg?token=b9795c2e-52ec-4f45-a31e-929cd9ff4765)](https://codecov.io/gh/aditirkrishna/c60.ai)
 
 C60.ai is a high-performance AutoML framework that combines evolutionary algorithms with modern machine learning techniques to automate and optimize the entire ML pipeline development process. Designed with scalability and flexibility in mind, it's perfect for both research and production use cases.
 
