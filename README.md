@@ -1,4 +1,4 @@
-# C60.ai: Molecular AutoML Framework
+# C60.ai: AutoML Framework
 
 ## Overview
 
