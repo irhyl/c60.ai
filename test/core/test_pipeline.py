@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.linear_model import LogisticRegression
 import uuid
 
-from src.c60.core.pipeline import PipelineStep, Pipeline
+from c60.core.pipeline import PipelineStep, Pipeline
 
 # Conceptual Git Commit 2/4: Add tests for PipelineStep initialization and properties.
 def test_pipeline_step_initialization():

@@ -11,6 +11,19 @@ readme = "README.md"
 requires-python = ">=3.9" # Targeting Python 3.9+ for modern features and type hints
 license = { text = "MIT" }
 keywords = ["automl", "machine-learning", "evolutionary-algorithms", "graph-neural-networks", "neuro-symbolic-ai"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules"
+]
 
 # Conceptual Git Commit 2/4: Add core runtime dependencies
 dependencies = [
@@ -58,17 +71,3 @@ build-backend = "setuptools.build_meta"
 Homepage = "https://github.com/yourusername/c60.ai" # Placeholder, will update later
 Documentation = "https://c60-ai.readthedocs.io" # Placeholder, will update later
 "Bug Tracker" = "https://github.com/yourusername/c60.ai/issues" # Placeholder
-
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Intended Audience :: Science/Research",
-  "Topic :: Scientific/Engineering :: Artificial Intelligence",
-  "Topic :: Software Development :: Libraries :: Python Modules"
-]
