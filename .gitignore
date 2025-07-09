@@ -1,0 +1,48 @@
+# .gitignore
+
+# Initialize .gitignore with common Python ignores.
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Add virtual environment and build-related ignores.
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project specific egg-info (will ignore UNKNOWN.egg-info and c60_ai.egg-info)
+*.egg-info/
+
+# Include common IDE and operating system ignores.
+# IDE specific files
+.vscode/ # VS Code (if Windsurf uses similar patterns)
+.idea/ # IntelliJ IDEA
+*.swp # Vim swap files
+*.bak # Backup files
+
+# OS generated files
+.DS_Store # macOS
+Thumbs.db # Windows
+ehthumbs.db # Windows
+.directory # Linux
+
+# Add ignores for test reports and distribution files.
+# Test and coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+
+# Logs
+*.log

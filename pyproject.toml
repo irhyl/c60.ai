@@ -1,4 +1,4 @@
-#Initialize pyproject.toml with basic project metadata
+# Conceptual Git Commit 1/4: Initialize pyproject.toml with basic project metadata
 [project]
 name = "c60-ai"
 version = "0.1.0"
@@ -12,7 +12,7 @@ requires-python = ">=3.9" # Targeting Python 3.9+ for modern features and type h
 license = { text = "MIT" }
 keywords = ["automl", "machine-learning", "evolutionary-algorithms", "graph-neural-networks", "neuro-symbolic-ai"]
 
-#Add core runtime dependencies
+# Conceptual Git Commit 2/4: Add core runtime dependencies
 dependencies = [
     "numpy>=1.22", # Fundamental package for scientific computing
     "pandas>=1.4", # Data manipulation and analysis
@@ -24,7 +24,7 @@ dependencies = [
     "pyyaml>=6.0", # For configuration file parsing
 ]
 
-#Define development and testing dependencies
+# Conceptual Git Commit 3/4: Define development and testing dependencies
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0", # Testing framework
@@ -49,8 +49,7 @@ advanced = [
     "requests>=2.28", # For API client examples
 ]
 
-
-#Finalize build backend and add project classifiers
+# Conceptual Git Commit 4/4: Finalize build backend and add project classifiers
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -60,15 +59,16 @@ Homepage = "https://github.com/yourusername/c60.ai" # Placeholder, will update l
 Documentation = "https://c60-ai.readthedocs.io" # Placeholder, will update later
 "Bug Tracker" = "https://github.com/yourusername/c60.ai/issues" # Placeholder
 
-[project.classifiers]
-"Programming Language :: Python :: 3"
-"Programming Language :: Python :: 3.9"
-"Programming Language :: Python :: 3.10"
-"Programming Language :: Python :: 3.11"
-"License :: OSI Approved :: MIT License"
-"Operating System :: OS Independent"
-"Development Status :: 3 - Alpha" # Initial status, will evolve
-"Intended Audience :: Developers"
-"Intended Audience :: Science/Research"
-"Topic :: Scientific/Engineering :: Artificial Intelligence"
-"Topic :: Software Development :: Libraries :: Python Modules"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules"
+]
