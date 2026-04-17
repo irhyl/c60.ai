@@ -1,0 +1,50 @@
+
+======================================================================
+  C60.ai BENCHMARK RESULTS
+======================================================================
+
+-- Mean +/- Std Accuracy (3-fold CV x 3 seeds) --
+
+                    breast_cancer           digits             iris             wine    Mean
+System                                                                                      
+C60.ai            0.9701 ± 0.0120  0.9894 ± 0.0028  0.9622 ± 0.0156  0.9757 ± 0.0171  0.9744
+GradientBoosting  0.9637 ± 0.0110  0.9705 ± 0.0069  0.9444 ± 0.0219  0.9513 ± 0.0372  0.9575
+KNN-10            0.9660 ± 0.0059  0.9698 ± 0.0054  0.9600 ± 0.0100  0.9589 ± 0.0267  0.9637
+LR                0.9754 ± 0.0112  0.9672 ± 0.0073  0.9556 ± 0.0167  0.9813 ± 0.0133  0.9698
+PCA+LR            0.9777 ± 0.0082  0.9592 ± 0.0084  0.9067 ± 0.0300  0.9776 ± 0.0119  0.9553
+RandomForest      0.9614 ± 0.0120  0.9733 ± 0.0049  0.9533 ± 0.0200  0.9738 ± 0.0170  0.9654
+RandomSearch-GBT  0.9614 ± 0.0139  0.9705 ± 0.0074  0.9533 ± 0.0173  0.9457 ± 0.0446  0.9577
+SVM-RBF           0.9719 ± 0.0102  0.9805 ± 0.0070  0.9533 ± 0.0245  0.9794 ± 0.0112  0.9713
+SelectKBest+GBT   0.9485 ± 0.0143  0.9034 ± 0.0145  0.9444 ± 0.0240  0.9494 ± 0.0349  0.9364
+VotingEnsemble    0.9707 ± 0.0124  0.9772 ± 0.0058  0.9511 ± 0.0176  0.9757 ± 0.0149  0.9687
+
+-- Average Rank Across Datasets (1 = best) --
+
+  2.75  C60.ai << C60.ai
+  2.75  SVM-RBF
+  3.50  LR
+  4.50  VotingEnsemble
+  5.50  KNN-10
+  5.75  RandomForest
+  5.75  PCA+LR
+  6.75  RandomSearch-GBT
+  7.00  GradientBoosting
+  9.25  SelectKBest+GBT
+
+-- Wilcoxon Signed-Rank: C60.ai vs Baselines --
+   (H1: C60.ai > baseline, one-sided, alpha=0.05)
+
+  SelectKBest+GBT        diff=+0.0380  p=0.0000  * significant
+  GradientBoosting       diff=+0.0169  p=0.0000  * significant
+  RandomSearch-GBT       diff=+0.0167  p=0.0001  * significant
+  PCA+LR                 diff=+0.0191  p=0.0002  * significant
+  KNN-10                 diff=+0.0107  p=0.0005  * significant
+  RandomForest           diff=+0.0089  p=0.0027  * significant
+  LR                     diff=+0.0045  p=0.0386  * significant
+  VotingEnsemble         diff=+0.0057  p=0.0821    -
+  SVM-RBF                diff=+0.0031  p=0.1781    -
+
+-- Summary --
+  Best-ranked system: C60.ai (avg rank 2.75)
+  C60.ai rank:        2.75
+
