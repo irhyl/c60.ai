@@ -73,6 +73,9 @@ def make_baselines() -> List[Tuple[str, BaseEstimator]]:
     Return a list of (name, estimator) pairs for all baseline systems.
     Each estimator implements fit / predict / score.
     """
+    n_est      = 200
+    n_est_vote = 100
+    rs_iter    = 10
 
     # 1 — Logistic Regression
     lr = SklearnPipeline([
@@ -95,13 +98,13 @@ def make_baselines() -> List[Tuple[str, BaseEstimator]]:
 
     # 4 — Random Forest (no scaler — trees don't need it)
     rf = RandomForestClassifier(
-        n_estimators=200, max_depth=None, min_samples_split=2,
+        n_estimators=n_est, max_depth=None, min_samples_split=2,
         random_state=42, n_jobs=1,
     )
 
     # 5 — Gradient Boosting
     gbt = GradientBoostingClassifier(
-        n_estimators=200, learning_rate=0.1, max_depth=3,
+        n_estimators=n_est, learning_rate=0.1, max_depth=3,
         subsample=0.8, random_state=42,
     )
 
@@ -117,7 +120,7 @@ def make_baselines() -> List[Tuple[str, BaseEstimator]]:
         ("scaler", StandardScaler()),
         ("sel",    SelectKBest(score_func=f_classif, k=10)),
         ("clf",    GradientBoostingClassifier(
-            n_estimators=200, learning_rate=0.1, max_depth=3,
+            n_estimators=n_est, learning_rate=0.1, max_depth=3,
             subsample=0.8, random_state=42,
         )),
     ])
@@ -126,10 +129,10 @@ def make_baselines() -> List[Tuple[str, BaseEstimator]]:
     voting = VotingClassifier(
         estimators=[
             ("lr",  LogisticRegression(C=1.0, max_iter=500, random_state=42)),
-            ("rf",  RandomForestClassifier(n_estimators=100, random_state=42,
+            ("rf",  RandomForestClassifier(n_estimators=n_est_vote, random_state=42,
                                            n_jobs=1)),
             ("gbt", GradientBoostingClassifier(
-                n_estimators=100, learning_rate=0.1, max_depth=3,
+                n_estimators=n_est_vote, learning_rate=0.1, max_depth=3,
                 random_state=42,
             )),
         ],
@@ -155,7 +158,7 @@ def make_baselines() -> List[Tuple[str, BaseEstimator]]:
         ("clf",    RandomizedSearchCV(
             GradientBoostingClassifier(random_state=42),
             param_distributions=_param_dist,
-            n_iter=10,  # 10 iters — tractable even on high-dim datasets
+            n_iter=rs_iter,
             cv=3,
             scoring="accuracy",
             random_state=42,
