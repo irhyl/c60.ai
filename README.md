@@ -34,13 +34,13 @@ The search space is always `Preprocessor → FeatureSelector → Model`. Systems
 
 ## Benchmark Results
 
-Evaluated against **9 sklearn baselines** across **10 standard classification datasets**
-(3-fold CV × 3 seeds = 9 evaluations per system per dataset):
+Selected results from the evaluation against **9 sklearn baselines**
+(core: 3-fold CV × 3 seeds; extended: 2-fold × 2 seeds):
 
 | Dataset | Samples | Features | Classes | C60.ai | Best Baseline | Delta |
 | --- | --- | --- | --- | --- | --- | --- |
 | digits | 1 797 | 64 | 10 | **98.94%** | SVM-RBF 98.05% | +0.89 pp |
-| pendigits | 8 000 | 16 | 10 | **99.45%** | RS-GBT 98.75% | +0.70 pp |
+| pendigits | 8 000 | 16 | 10 | 99.54% | SVM-RBF 99.56% | −0.02 pp |
 | breast_cancer | 569 | 30 | 2 | 97.01% | PCA+LR 97.77% | −0.76 pp |
 | wine | 178 | 13 | 3 | 97.57% | LR 98.13% | −0.56 pp |
 | iris | 150 | 4 | 3 | **96.22%** | KNN-10 96.00% | +0.22 pp |
