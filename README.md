@@ -34,8 +34,7 @@ The search space is always `Preprocessor → FeatureSelector → Model`. Systems
 
 ## Benchmark Results
 
-Selected results from the evaluation against **9 sklearn baselines**
-(core: 3-fold CV × 3 seeds; extended: 2-fold × 2 seeds):
+### vs. 9 sklearn baselines (core: 3-fold × 3 seeds; extended: 2-fold × 2 seeds)
 
 | Dataset | Samples | Features | Classes | C60.ai | Best Baseline | Delta |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -46,8 +45,23 @@ Selected results from the evaluation against **9 sklearn baselines**
 | iris | 150 | 4 | 3 | **96.22%** | KNN-10 96.00% | +0.22 pp |
 
 **C60.ai ranks #1 overall** (avg rank 2.75), **significantly outperforms 7 of 9 baselines**
-(Wilcoxon signed-rank, p < 0.05), and matches the two strongest hand-tuned ensembles
-(SVM-RBF, VotingEnsemble) — with no manual design decisions.
+(Wilcoxon signed-rank, p < 0.05).
+
+### vs. 10 AutoML frameworks (2-fold × 2 seeds)
+
+| Rank | System | Mean Accuracy | digits | iris |
+| --- | --- | --- | --- | --- |
+| 1 | OptunaEnsemble | 97.01% | 98.58% | 94.00% |
+| 2 | GreedyEnsemble | 96.84% | **98.66%** | 93.67% |
+| 3 | AutoStack | 96.72% | 97.77% | 93.67% |
+| 4 | FeatEngAutoML | 96.73% | 98.50% | 93.33% |
+| **5** | **C60.ai** | **96.40%** | **98.83%** | **96.00%** |
+| 6 | BayesSearchCV | 96.54% | 98.19% | 94.33% |
+| 7 | OptunaSearch | 96.62% | 97.61% | **96.00%** |
+
+**C60.ai ranks #5 of 11** overall and is the **best single system on digits** (98.83%).
+No AutoML system is statistically significantly better than C60.ai (Wilcoxon p > 0.05).
+C60.ai's structural advantage is clearest on high-dimensional multi-class problems.
 
 Full results, plots, and statistical analysis: [`benchmark/results/`](benchmark/results/)
 
