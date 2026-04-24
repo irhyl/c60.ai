@@ -34,36 +34,48 @@ The search space is always `Preprocessor → FeatureSelector → Model`. Systems
 
 ## Benchmark Results
 
-### vs. 9 sklearn baselines (core: 3-fold × 3 seeds; extended: 2-fold × 2 seeds)
+### vs. 9 sklearn baselines — 7 datasets, 3-fold × 3 seeds
 
-| Dataset | Samples | Features | Classes | C60.ai | Best Baseline | Delta |
+**C60.ai achieves the highest mean accuracy (94.95%) across all 7 datasets**, ranking #1 by mean accuracy and outperforming 7 of 9 baselines at p < 0.05 (Wilcoxon signed-rank).
+
+| Dataset | Samples | Features | Classes | C60.ai | Best Baseline | Δ |
 | --- | --- | --- | --- | --- | --- | --- |
-| digits | 1 797 | 64 | 10 | **98.94%** | SVM-RBF 98.05% | +0.89 pp |
+| iris | 150 | 4 | 3 | **96.00%** | KNN-10 95.33% | +0.67 pp |
+| digits | 1 797 | 64 | 10 | **98.83%** | SVM-RBF 97.86% | +0.97 pp |
+| waveform | 5 000 | 21 | 3 | **86.70%** | VotEns 85.80% | +0.90 pp |
 | pendigits | 8 000 | 16 | 10 | 99.54% | SVM-RBF 99.56% | −0.02 pp |
-| breast_cancer | 569 | 30 | 2 | 97.01% | PCA+LR 97.77% | −0.76 pp |
-| wine | 178 | 13 | 3 | 97.57% | LR 98.13% | −0.56 pp |
-| iris | 150 | 4 | 3 | **96.22%** | KNN-10 96.00% | +0.22 pp |
+| letter | 8 000 | 16 | 26 | 92.84% | SVM-RBF 93.60% | −0.76 pp |
+| wine | 178 | 13 | 3 | 95.79% | SVM-RBF 97.75% | −1.97 pp |
+| breast_cancer | 569 | 30 | 2 | 94.99% | LR 98.33% | −3.34 pp |
 
-**C60.ai ranks #1 overall** (avg rank 2.75), **significantly outperforms 7 of 9 baselines**
-(Wilcoxon signed-rank, p < 0.05).
+C60.ai leads on high-dimensional multi-class tasks where topology search matters most. It trails on simple low-dimensional datasets where linear models are near-optimal.
 
-### vs. 10 AutoML frameworks (2-fold × 2 seeds)
+### vs. 9 AutoML frameworks — 4 datasets, 2-fold × 2 seeds
 
-| Rank | System | Mean Accuracy | digits | iris |
-| --- | --- | --- | --- | --- |
-| 1 | OptunaEnsemble | 97.01% | 98.58% | 94.00% |
-| 2 | GreedyEnsemble | 96.84% | **98.66%** | 93.67% |
-| 3 | AutoStack | 96.72% | 97.77% | 93.67% |
-| 4 | FeatEngAutoML | 96.73% | 98.50% | 93.33% |
-| **5** | **C60.ai** | **96.40%** | **98.83%** | **96.00%** |
-| 6 | BayesSearchCV | 96.54% | 98.19% | 94.33% |
-| 7 | OptunaSearch | 96.62% | 97.61% | **96.00%** |
+| System | Mean Acc. | Digits | Avg Rank |
+| --- | --- | --- | --- |
+| Optuna Ensemble | 97.01% | 98.58% | 1.75 |
+| Greedy Ensemble | 96.84% | 98.66% | 2.25 |
+| FeatEng AutoML | 96.73% | 98.50% | 3.00 |
+| AutoStack | 96.72% | 97.77% | 3.50 |
+| Optuna Search | 96.62% | 97.61% | 4.50 |
+| BayesSearchCV | 96.54% | 98.19% | 4.75 |
+| **C60.ai** | **96.40%** | **98.83%** ★ | 5.25 |
+| Hyperopt Search | 95.40% | 97.22% | 7.25 |
+| Succ. Halving | 94.73% | 98.44% | 7.75 |
+| Broad Rand. | 94.12% | 97.78% | 8.00 |
 
-**C60.ai ranks #5 of 11** overall and is the **best single system on digits** (98.83%).
-No AutoML system is statistically significantly better than C60.ai (Wilcoxon p > 0.05).
-C60.ai's structural advantage is clearest on high-dimensional multi-class problems.
+★ **Best single-system accuracy on Digits across all 10 systems.**  
+No AutoML framework statistically significantly outperforms C60.ai (Wilcoxon p > 0.05).
 
 Full results, plots, and statistical analysis: [`benchmark/results/`](benchmark/results/)
+
+### Research Paper
+
+This work is written up as an ICML 2026 workshop submission:  
+[`example_paper.tex`](example_paper.tex) / [`example_paper.bib`](example_paper.bib)
+
+Figures: [`benchmark/results/paper_figures/`](benchmark/results/paper_figures/)
 
 ---
 

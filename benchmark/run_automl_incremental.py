@@ -32,6 +32,8 @@ def _parse():
     p = argparse.ArgumentParser()
     p.add_argument("--fast", action="store_true",
                    help="2 folds x 2 seeds instead of 3 x 3.")
+    p.add_argument("--extended", action="store_true",
+                   help="Add pendigits, letter, waveform (OpenML datasets).")
     p.add_argument("--no-c60", action="store_true")
     p.add_argument("--time-budget", type=int, default=60)
     p.add_argument("--output", default="benchmark/results")
@@ -220,7 +222,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     csv_path = out / "results_automl.csv"
 
-    from benchmark.runner import load_datasets
+    from benchmark.runner import load_datasets, load_extended_datasets
     from benchmark.automl_baselines import all_automl_systems
 
     print(f"Loading systems (time_budget={args.time_budget}s)...")
@@ -235,6 +237,9 @@ def main():
 
     print(f"Systems ({len(systems)}): {', '.join(n for n, _ in systems)}\n")
     datasets = load_datasets()
+    if args.extended:
+        print("Fetching extended OpenML datasets (cached after first download)...")
+        datasets = datasets + load_extended_datasets(max_samples=8000)
     print(f"Datasets ({len(datasets)}): {[n for n, *_ in datasets]}\n")
 
     n_folds = 2 if args.fast else 3

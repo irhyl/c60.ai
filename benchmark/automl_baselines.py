@@ -908,7 +908,11 @@ def all_automl_systems(time_budget: int = 120) -> list[tuple[str, BaseEstimator]
         ("AutoStack",         lambda: AutoStack()),
         ("FeatEngAutoML",     lambda: FeatureEngineeringAutoML(n_iter=20)),
         ("OptunaEnsemble",    lambda: OptunaEnsemble(n_trials=20)),
-        ("HalvingGrid",       lambda: HalvingGridAutoML()),
+        # HalvingGrid: excluded from extended (>2000 samples) — HalvingGridSearchCV
+        # takes O(n_samples) per halving round; 8000-sample datasets would require
+        # several hours per fold. Core-dataset results (iris/wine/breast_cancer) are
+        # retained in results_automl.csv from the 4-dataset benchmark.
+        # ("HalvingGrid",     lambda: HalvingGridAutoML()),
     ]
 
     systems = []
