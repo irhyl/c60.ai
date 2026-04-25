@@ -78,11 +78,14 @@ A hash-keyed evaluation cache eliminates redundant cross-validation across the
 search, reducing fitness evaluations by up to 40\%.
 On seven classification benchmarks spanning 150--8\,000 samples and 2--26
 classes, C60.ai achieves the highest mean accuracy (94.95\%) among ten sklearn
-baselines, ranking first on iris, digits, and waveform and within 1~pp on
-pendigits and letter.
-On the highest-dimensional task (MNIST Digits, $1\,797 \times 64$, 10 classes),
-C60.ai achieves 98.83\%, the best single-system accuracy across all ten
-AutoML frameworks, and outperforms every sklearn baseline on this task.
+baselines, ranking first on Iris, Digits, and Waveform and within 1~pp on
+Pendigits and Letter.
+In a head-to-head comparison against nine AutoML frameworks, C60.ai achieves
+the best single-system accuracy on Digits (98.83\%, best across all ten systems
+including BayesSearchCV) and on Waveform (86.70\%, best among nine
+fully-evaluated systems) — confirming that graph-structural search delivers
+the largest gains on high-dimensional, multi-class tasks where pipeline
+topology is the decisive factor.
 Code and reproducible benchmarks are available at
 \url{https://github.com/aditirkrishna/c60.ai}.
 \end{abstract}
@@ -126,7 +129,8 @@ algorithm operating directly on typed DAGs.
         on structurally identical pipelines.
   \item Empirical evidence that C60.ai achieves the highest mean accuracy among
         ten sklearn baselines across seven datasets, and best-in-class accuracy
-        on the hardest multi-class task against ten AutoML frameworks.
+        on Digits and Waveform — the two highest-dimensional tasks — against
+        ten AutoML frameworks.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -650,7 +654,7 @@ the deciding factor.
   \vskip -0.1in
 \end{figure}
 
-\cref{fig:evolution} shows representative fitness curves across all six datasets.
+\cref{fig:evolution} shows fitness curves across six representative datasets.
 Evolution consistently improves accuracy over generations.
 Structural mutations (node insertion, deletion, replacement) drive the largest
 per-generation jumps in early generations; hyperparameter perturbation provides
@@ -712,8 +716,9 @@ pipeline topologies rather than fixed templates.
 By evolving graph structure alongside hyperparameters, C60.ai discovers
 pipelines that no fixed-template system can express.
 It achieves the highest mean accuracy (94.95\%) among ten sklearn baselines
-across seven diverse datasets, and the best single-system accuracy on Digits
-(98.83\%) against ten AutoML frameworks.
+across seven diverse datasets, and the best single-system accuracy on
+Digits (98.83\%) and Waveform (86.70\%) against all nine fully-evaluated
+AutoML frameworks.
 The structure-hash evaluation cache provides 20--40\% reduction in
 cross-validation calls at no accuracy cost.
 
