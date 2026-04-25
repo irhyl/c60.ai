@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 
 import networkx as nx
 
-from c60.core.pipeline import Pipeline, PipelineStep
+from c60.core.pipeline import Pipeline
 from c60.core.registry import OperationRegistry
 from c60.core.types import is_compatible
 from c60.execution.validator import PipelineValidator

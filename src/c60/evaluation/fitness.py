@@ -28,7 +28,7 @@ import traceback
 from typing import Any, Optional
 
 import numpy as np
-from sklearn.model_selection import StratifiedKFold, KFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold, KFold
 
 from c60.core.pipeline import Pipeline
 from c60.evaluation.cache import EvaluationCache, FitnessResult

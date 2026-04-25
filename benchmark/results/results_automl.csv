@@ -285,3 +285,4 @@ OptunaEnsemble,waveform,0,0,0.863200,32.57
 OptunaEnsemble,waveform,0,1,0.865200,32.79
 OptunaEnsemble,waveform,1,0,0.864000,1894.29
 OptunaEnsemble,waveform,1,1,0.865200,41.56
+HyperoptSearch,mnist,0,0,0.944500,2475.11

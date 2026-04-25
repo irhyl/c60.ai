@@ -38,7 +38,6 @@ from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.pipeline import Pipeline as SklearnPipeline  # noqa: F401 (for reference)
 from sklearn.preprocessing import (
     MinMaxScaler,
-    OneHotEncoder,
     PolynomialFeatures,
     RobustScaler,
     StandardScaler,
@@ -51,7 +50,6 @@ from c60.core.types import (
     DataType,
     Features,
     ClassLabels,
-    Probabilities,
     RawTabular,
     RegressionValues,
     ScaledData,

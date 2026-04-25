@@ -1,31 +1,29 @@
 """
-automl_baselines.py — 12 AutoML system wrappers for C60.ai comparison.
+automl_baselines.py — AutoML system wrappers for C60.ai comparison.
 
 Each wrapper implements the sklearn estimator interface (fit / predict / score)
 so it can be dropped into the existing BenchmarkRunner unchanged.
 
-Systems
--------
- 1  TPOT              Genetic-programming pipeline search (Olson et al., 2016)
- 2  FLAML             Cost-frugal Bayesian search (Wang et al., 2021)
- 3  HyperoptSearch    TPE-based hyperparameter search over 7 model families
- 4  OptunaSearch      Optuna TPE over 7 model families + feature selectors
- 5  BayesSearchCV     scikit-optimize Gaussian-process BO over GBT+SVM+RF
- 6  SuccessiveHalving sklearn HalvingRandomSearchCV — resource-aware pruning
- 7  BroadRandomSearch RandomizedSearchCV over all sklearn model families
- 8  GreedyEnsemble    Forward-selection stacking (auto-sklearn style post-proc)
- 9  AutoStack         3-level stacking with auto-selected base learners
-10  IterativeImputer+ Feature engineering → SelectPercentile → best-model search
-11  OptunaEnsemble    Optuna-optimised voting weights over 5 base models
-12  HalvingGridSearch HalvingGridSearchCV — exhaustive but resource-aware
+Active systems (returned by all_automl_systems())
+--------------------------------------------------
+ 1  HyperoptSearch    TPE-based hyperparameter search over 7 model families
+ 2  OptunaSearch      Optuna TPE over 7 model families + feature selectors
+ 3  BayesSearchCV     scikit-optimize Gaussian-process BO over GBT+SVM+RF
+ 4  SuccessiveHalving sklearn HalvingRandomSearchCV — resource-aware pruning
+ 5  BroadRandomSearch RandomizedSearchCV over all sklearn model families
+ 6  GreedyEnsemble    Forward-selection stacking (auto-sklearn style post-proc)
+ 7  AutoStack         3-level stacking with auto-selected base learners
+ 8  FeatEngAutoML     Feature engineering → SelectPercentile → best-model search
+ 9  OptunaEnsemble    Optuna-optimised voting weights over 5 base models
+
+Additional class definitions retained for ad-hoc use
+-----------------------------------------------------
+  HalvingGridAutoML  — prohibitively slow on datasets > 2000 samples
+  TPOT, FLAML, H2O   — platform/dependency constraints on this build
 
 Notes
 -----
-- H2O AutoML, AutoGluon, auto-sklearn, PyCaret, EvalML, MLJAR are listed as
-  known systems but skipped with a clear warning when not installed or when
-  platform constraints apply (auto-sklearn is Linux/Mac only).
-- All wrappers respect a `time_budget` parameter (default 120 s) to keep
-  the benchmark tractable.
+- All wrappers respect a `time_budget` parameter (default 120 s).
 - Wrappers that use randomness accept `random_state` for reproducibility.
 """
 
@@ -891,13 +889,17 @@ class HalvingGridAutoML(BaseEstimator, ClassifierMixin):
 
 def all_automl_systems(time_budget: int = 120) -> list[tuple[str, BaseEstimator]]:
     """
-    Return all 12 AutoML systems.
+    Return the 9 AutoML systems used in the benchmark.
     Systems that require unavailable packages are silently skipped with a
     printed warning so the benchmark degrades gracefully.
+
+    Excluded (class definitions retained for ad-hoc use):
+      BayesSearchCV  — skopt ignores time_budget; 600-1200 s/fold on large datasets
+      HalvingGrid    — O(n_samples) per round; prohibitive on 8 000-sample datasets
+      TPOT           — requires torch (MemoryError on this build)
+      FLAML          — ignores time_budget on Windows/Python 3.13
+      H2O            — requires 500 MB disk
     """
-    # TPOT: excluded — requires torch, which fails with MemoryError on this build
-    # FLAML: excluded — ignores time_budget on Windows/Python 3.13 (>298s overhead)
-    # H2O: excluded — requires 500 MB disk space (C: drive full)
     candidates = [
         ("HyperoptSearch",    lambda: HyperoptSearch(max_evals=20)),
         ("OptunaSearch",      lambda: OptunaSearch(n_trials=20)),
@@ -908,11 +910,6 @@ def all_automl_systems(time_budget: int = 120) -> list[tuple[str, BaseEstimator]
         ("AutoStack",         lambda: AutoStack()),
         ("FeatEngAutoML",     lambda: FeatureEngineeringAutoML(n_iter=20)),
         ("OptunaEnsemble",    lambda: OptunaEnsemble(n_trials=20)),
-        # HalvingGrid: excluded from extended (>2000 samples) — HalvingGridSearchCV
-        # takes O(n_samples) per halving round; 8000-sample datasets would require
-        # several hours per fold. Core-dataset results (iris/wine/breast_cancer) are
-        # retained in results_automl.csv from the 4-dataset benchmark.
-        # ("HalvingGrid",     lambda: HalvingGridAutoML()),
     ]
 
     systems = []
