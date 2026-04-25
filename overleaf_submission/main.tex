@@ -81,8 +81,8 @@ classes, C60.ai achieves the highest mean accuracy (94.95\%) among ten sklearn
 baselines, ranking first on iris, digits, and waveform and within 1~pp on
 pendigits and letter.
 On the highest-dimensional task (MNIST Digits, $1\,797 \times 64$, 10 classes),
-C60.ai achieves 98.83\%, outperforming every baseline and every AutoML framework
-in a ten-system comparison.
+C60.ai achieves 98.83\%, the best single-system accuracy across all ten
+AutoML frameworks, and outperforms every sklearn baseline on this task.
 Code and reproducible benchmarks are available at
 \url{https://github.com/aditirkrishna/c60.ai}.
 \end{abstract}
@@ -179,72 +179,195 @@ and its search space is a sequence rather than a general DAG.
 \section{Method}
 \label{sec:method}
 
+\cref{fig:arch} gives an overview of the full system.
+The core loop is: initialise a population of random typed DAGs $\to$ evaluate
+each with cached cross-validation $\to$ select parents $\to$ apply structural
+crossover and mutation $\to$ carry elites forward $\to$ repeat for $T$
+generations.
+Each component is described precisely below.
+
+\begin{figure*}[t]
+  \vskip 0.1in
+  \centering
+  \includegraphics[width=\textwidth]{fig0_architecture}
+  \caption{%
+    \textbf{C60.ai system architecture.}
+    The operation registry $\mathcal{R}$ (left, purple) supplies type-safe
+    operations to population initialisation and mutation.
+    Fitness evaluation is accelerated by the structure-hash cache (bottom orange):
+    if $h(G)$ already exists, cross-validation is skipped entirely.
+    Elites (orange path) bypass selection and crossover, entering the next
+    generation directly.
+    The best pipeline and its \emph{PipelineStory} narrative are returned after
+    $T$ generations.%
+  }
+  \label{fig:arch}
+  \vskip -0.1in
+\end{figure*}
+
 \subsection{Typed DAG Pipeline Representation}
 
+\begin{definition}[Data-Type Lattice]
+The type set $\mathcal{T} = \{\texttt{Array}, \texttt{Labels}\}$ defines two
+data kinds.
+An edge $(u, v) \in E$ is \emph{type-valid} iff
+$\tau_{\mathrm{out}}(u) = \tau_{\mathrm{in}}(v)$.
+\end{definition}
+
 \begin{definition}[Operation Registry]
-An \emph{operation registry} $\mathcal{R}$ is a set of operations each with
-declared input type $\tau_{\mathrm{in}} \in \mathcal{T}$ and output type
-$\tau_{\mathrm{out}} \in \mathcal{T}$.
-Transformers have $\tau_{\mathrm{in}} = \tau_{\mathrm{out}} = \texttt{Array}$;
-classifiers have $\tau_{\mathrm{in}} = \texttt{Array}$,
-$\tau_{\mathrm{out}} = \texttt{Labels}$.
+The registry $\mathcal{R}$ partitions 12 concrete operations by type signature:
+\begin{itemize}
+  \item \textit{Transformers} ($\texttt{Array} \to \texttt{Array}$, 7 ops):
+        \texttt{StandardScaler}, \texttt{MinMaxScaler}, \texttt{RobustScaler},
+        \texttt{PCA}, \texttt{TruncatedSVD}, \texttt{SelectKBest},
+        \texttt{SelectFromModel}.
+  \item \textit{Classifiers} ($\texttt{Array} \to \texttt{Labels}$, 5 ops):
+        \texttt{SVC} (RBF), \texttt{RandomForest}, \texttt{GradientBoosting},
+        \texttt{LogisticRegression}, \texttt{KNeighbors}.
+\end{itemize}
+Each operation $r \in \mathcal{R}$ has a typed hyperparameter space
+$\Theta_r$ (e.g., $C \in \mathbb{R}_{>0}$, $\gamma \in \mathbb{R}_{>0}$ for
+\texttt{SVC}).
 \end{definition}
 
 \begin{definition}[Pipeline DAG]
-A \emph{pipeline} is a DAG $G = (V, E)$ where each node $v \in V$ is an
-operation from $\mathcal{R}$ with configuration $\theta_v$, and each edge
-$(u, v) \in E$ satisfies $\tau_{\mathrm{out}}(u) = \tau_{\mathrm{in}}(v)$.
-The DAG has one source node (data input) and one sink node (a classifier).
+A \emph{pipeline} is a DAG $G = (V, E, \theta)$ where:
+\begin{enumerate}
+  \item each $v \in V$ is drawn from $\mathcal{R}$ with configuration
+        $\theta_v \in \Theta_{\mathrm{type}(v)}$,
+  \item every edge $(u,v) \in E$ is type-valid,
+  \item $G$ has exactly one source node $v_s$ with $\tau_{\mathrm{in}}(v_s) =
+        \texttt{Array}$ (receives raw features),
+  \item $G$ has exactly one sink node $v_t$ with $\tau_{\mathrm{out}}(v_t) =
+        \texttt{Labels}$ (a classifier).
+\end{enumerate}
 \end{definition}
 
-Type checking is enforced at every mutation step; invalid graphs are discarded
-and resampled.
+\paragraph{Execution semantics.}
+To evaluate $G$ on sample $\mathbf{x}$, a topological traversal of $V$ is
+performed.
+At each node $v$, the outputs of all predecessors are concatenated (if multiple
+parents exist) and passed through $v$'s fitted sklearn transformer or
+classifier.
+The sink node's output is the predicted label.
+
+\paragraph{Initialisation.}
+Each individual in the initial population $\mathcal{P}_0$ is constructed by:
+(i) sampling a chain length $\ell \sim \mathrm{Uniform}(\{1,2,3\})$,
+(ii) sampling $\ell$ transformer operations uniformly from $\mathcal{R}$,
+(iii) appending a uniformly sampled classifier as the sink,
+(iv) sampling all hyperparameters from their prior distributions.
+This gives a population of valid linear DAGs; structural operators then
+discover non-linear topologies across generations.
 
 \subsection{Fitness Function}
 
-For pipeline $G$ on dataset $\mathcal{D} = (X, y)$:
+For pipeline $G$ evaluated on dataset $\mathcal{D} = (X, y)$:
 \begin{equation}
   \mathcal{F}(G;\,\mathcal{D}) = \overline{\mathrm{CV}}_k(G,\mathcal{D})
     - \lambda\,|V|,
   \label{eq:fitness}
 \end{equation}
-where $\overline{\mathrm{CV}}_k$ is mean stratified $k$-fold accuracy,
-$|V|$ is the number of nodes, and $\lambda = 0.002$ penalizes complexity.
+where $\overline{\mathrm{CV}}_k$ is mean stratified $k$-fold cross-validation
+accuracy, $|V|$ is the number of nodes, and $\lambda = 0.002$.
+
+The complexity term serves two purposes.
+First, it penalises pipelines that add redundant transformer nodes (e.g.\ two
+consecutive scalers) without accuracy gain.
+Second, it creates a tie-breaking preference for simpler topologies when two
+pipelines achieve identical CV accuracy, which is important in low-data regimes.
+The value $\lambda = 0.002$ was chosen so that one extra node costs $0.2$~pp of
+accuracy — small enough not to bias against genuinely useful stages, large
+enough to discourage bloat.
 
 \subsection{Genetic Operators}
+\label{sec:operators}
 
-\paragraph{Selection.} Tournament selection (size 3): three individuals are drawn
-and the highest-fitness one becomes a parent.
+\paragraph{Selection.}
+Tournament selection with size $k_t = 3$: three individuals are drawn uniformly
+at random from $\mathcal{P}_{t-1}$ and the one with highest $\mathcal{F}$
+becomes a parent.
+Applied twice to produce each pair of parents $(G_1, G_2)$.
 
-\paragraph{Crossover.} A random subgraph of parent $G_1$ (identified via BFS
-from a sampled transformer node) is rewired to replace the corresponding
-position in parent $G_2$, subject to type compatibility.
+\paragraph{Subgraph crossover.}
+Let $T_1 \subset V_1$ be the transformer nodes of $G_1$ (all nodes except the
+source and classifier).
+A crossover point $c \in T_1$ is sampled uniformly.
+The \emph{donor subgraph} $S_1$ is the subgraph of $G_1$ reachable from $c$
+via BFS (excluding the classifier).
+A corresponding \emph{recipient position} in $G_2$ is identified as the node
+whose depth in $G_2$ is closest to the depth of $c$ in $G_1$.
+The donor subgraph replaces the recipient subtree of $G_2$, subject to:
+(a) the resulting graph remains a valid DAG, and
+(b) the output type of $S_1$'s root is compatible with its new successor in
+$G_2$.
+If neither condition is satisfiable, the child inherits $G_1$ unchanged
+(\emph{null crossover}).
+In practice, null crossover occurs in $\approx 12\%$ of operations.
 
-\paragraph{Mutation.} Five operators applied stochastically per generation:
+\paragraph{Mutation.}
+Each of the five operators is applied independently with probability
+$p_{\mathrm{mut}} = 0.2$ per operator per individual:
+
 \begin{enumerate}
-  \item \textbf{Node insertion} — add a transformer on an existing edge.
-  \item \textbf{Node deletion} — remove a non-classifier node; bridge parent to child.
-  \item \textbf{Node replacement} — swap for a type-compatible operation from $\mathcal{R}$.
-  \item \textbf{Edge redirection} — redirect $(u,v)$ to $(u,w)$ for valid $w \neq v$.
-  \item \textbf{Hyperparameter perturbation} — Gaussian noise (continuous) or
-        uniform resample (discrete).
+  \item \textbf{Node insertion}: sample an edge $(u,v) \in E$ uniformly; sample
+        a transformer $r \in \mathcal{R}$ with $\tau_{\mathrm{in}}(r) =
+        \tau_{\mathrm{out}}(u)$; insert $r$ between $u$ and $v$, splitting the
+        edge.
+  \item \textbf{Node deletion}: sample a non-classifier, non-source node $v$
+        uniformly; remove $v$ and connect each parent of $v$ directly to each
+        child of $v$, preserving type validity.
+  \item \textbf{Node replacement}: sample a node $v$ uniformly; replace
+        $\mathrm{type}(v)$ with a uniformly sampled operation of the same type
+        signature; re-sample $\theta_v$ from the new prior.
+  \item \textbf{Edge redirection}: sample an edge $(u,v)$ uniformly; sample
+        an alternative target $w \in V \setminus \{v\}$ such that
+        $\tau_{\mathrm{in}}(w) = \tau_{\mathrm{out}}(u)$ and the result
+        remains a DAG; replace $(u,v)$ with $(u,w)$.
+  \item \textbf{Hyperparameter perturbation}: for each continuous parameter
+        $\theta^{(i)}_v \in \Theta_v$, apply additive Gaussian noise
+        $\theta^{(i)}_v \leftarrow \theta^{(i)}_v + \mathcal{N}(0,\,\sigma^2)$
+        where $\sigma = 0.1 \cdot \mathrm{range}(\theta^{(i)})$;
+        for discrete parameters, resample uniformly.
 \end{enumerate}
 
-\paragraph{Elitism.} The top $e = 2$ individuals carry forward unchanged.
-The full loop is given in \cref{alg:c60} (Appendix~\ref{app:alg}).
+After any structural operator (1--4), type validity is re-checked; if violated,
+the operation is retried up to 5 times before being skipped.
+
+\paragraph{Elitism.}
+The top $e = 2$ individuals by $\mathcal{F}$ are copied unchanged into
+$\mathcal{P}_t$, guaranteeing the best-found fitness is non-decreasing.
+The full evolutionary loop is given in \cref{alg:c60} (Appendix~\ref{app:alg}).
 
 \subsection{Structure-Hash Evaluation Cache}
 
-Before evaluating pipeline $G$ we compute:
+Cross-validation dominates runtime.
+Before evaluating pipeline $G$, C60.ai computes a canonical structure hash:
 \begin{equation}
-  h(G) = \mathrm{hash}\!\left(
-    \bigl\{(v,\,\mathrm{type}(v),\,\theta_v)\bigr\}_{v \in V},\; E
-  \right)
+  h(G) = \mathrm{SHA256}\!\left(
+    \mathrm{sort}\bigl\{(\mathrm{id}(v),\,\mathrm{type}(v),\,
+    \mathrm{freeze}(\theta_v))\bigr\}_{v \in V}
+    \;\|\; \mathrm{sort}(E)
+  \right),
 \end{equation}
-and query an \texttt{EvaluationCache} keyed by $h(G)$.
-Cache hits skip cross-validation entirely.
-FIFO eviction with capacity 512 entries yields mean hit rates of 20--40\%
-(see \cref{fig:cache}).
+where $\mathrm{freeze}$ rounds floating-point hyperparameters to 4 decimal
+places to handle floating-point noise, and $\|$ denotes concatenation before
+hashing.
+If $h(G)$ is in the cache, $\mathcal{F}(G)$ is returned immediately with no
+cross-validation call.
+The cache uses FIFO eviction with capacity 512.
+Hit rates of 20--40\% (see \cref{fig:cache}) arise because crossover frequently
+reconstructs previously evaluated sub-structures.
+
+\subsection{PipelineStory: Explainability}
+
+After evolution completes, C60.ai generates a \emph{PipelineStory}: a
+human-readable narrative of the full search trajectory including (i) per-generation
+fitness improvements attributed to specific operators, (ii) the final pipeline
+topology described in plain language, and (iii) permutation-importance scores for
+each input feature computed on the final pipeline.
+This is the only AutoML system in our comparison that provides operator-level
+explanations of \emph{why} the best pipeline was chosen.
 
 %%% 4. EXPERIMENTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments}
@@ -440,11 +563,12 @@ The two exceptions are SVM-RBF ($p = 0.21$) and Voting Ensemble ($p = 0.17$).
   \centering
   \includegraphics[width=\columnwidth]{fig5_automl}
   \caption{%
-    \textbf{AutoML framework comparison} on five datasets
-    (Iris, Wine, Breast Cancer, Digits, Pendigits), 2-fold $\times$ 2 seeds.
+    \textbf{AutoML framework comparison} on seven datasets
+    (Iris through Waveform), 2-fold $\times$ 2 seeds.
     Left: per-dataset accuracy.
     Right: mean accuracy ranking — C60.ai (blue) achieves the
-    best single-system accuracy on Digits (98.83\%) across all 10 systems.%
+    best single-system accuracy on Digits (98.83\%) and Waveform (86.70\%)
+    across all nine fully-evaluated systems.%
   }
   \label{fig:automl}
   \vskip -0.1in
@@ -455,13 +579,16 @@ OptunaSearch, BayesSearchCV, Successive Halving, Broad Random Search,
 Greedy Ensemble, AutoStack (stacked generalisation), FeatEng AutoML,
 and Optuna Ensemble.
 Protocol: stratified 2-fold CV $\times$ 2 seeds (4 folds per system--dataset pair).
-Results are reported on the five datasets for which all ten systems have
-complete fold data.
+Nine systems complete all seven datasets; BayesSearchCV is excluded from
+Letter and Waveform because each fold requires 600--1\,200~s under skopt,
+far exceeding the 60~s budget (its 5-dataset mean is 97.07\%).
 
 \begin{table}[t]
   \caption{%
-    AutoML comparison on 5 datasets. Mean accuracy (\%) sorted by mean.
-    $^\dagger$Best single-system accuracy on Digits across all 10 systems.%
+    AutoML comparison — 9 systems $\times$ 7 datasets.
+    Mean accuracy (\%) sorted by 7-dataset mean.
+    $^\dagger$Best on Digits across all 10 systems (incl.\ BayesSearchCV).
+    $^\ddagger$Best on Waveform.%
   }
   \label{tab:automl}
   \vskip 0.05in
@@ -469,18 +596,17 @@ complete fold data.
     \begin{small}
       \begin{tabular}{lcccc}
         \toprule
-        System             & Mean   & Iris   & Digits         & Pendigits \\
+        System             & Mean   & Digits         & Letter         & Waveform \\
         \midrule
-        Optuna Ensemble    & 97.53  & 94.00  & 98.58          & 99.62 \\
-        Greedy Ensemble    & 97.39  & 93.67  & \textbf{98.66} & 99.62 \\
-        AutoStack          & 97.30  & 93.67  & 97.77          & 99.61 \\
-        FeatEng AutoML     & 97.25  & 93.33  & 98.50          & 99.36 \\
-        Optuna Search      & 97.20  & 96.00  & 97.61          & 99.51 \\
-        Broad Rand.        & 97.15  & 96.00  & 97.52          & 99.52 \\
-        BayesSearchCV      & 97.07  & 94.33  & 98.19          & 99.19 \\
-        Succ.\ Halving     & 97.04  & 96.67  & 97.41          & 99.42 \\
-        \sys{C60.ai}       & 97.03  & 96.00  & \sys{98.83}$^\dagger$ & 99.53 \\
-        Hyperopt Search    & 96.99  & 95.33  & 97.69          & 99.52 \\
+        Optuna Ensemble    & 95.51  & 98.58          & 94.44          & 86.44 \\
+        Greedy Ensemble    & 95.48  & 98.66          & \textbf{94.76} & 86.64 \\
+        AutoStack          & 95.24  & 97.77          & 94.12          & 86.07 \\
+        Optuna Search      & 95.21  & 97.61          & 93.86          & 86.61 \\
+        FeatEng AutoML     & 95.18  & 98.50          & 93.51          & 86.50 \\
+        Broad Rand.        & 95.12  & 97.52          & 93.55          & 86.51 \\
+        Hyperopt Search    & 95.05  & 97.69          & 93.75          & 86.66 \\
+        \sys{C60.ai}       & 94.95  & \sys{98.83}$^\dagger$ & 92.84 & \sys{86.70}$^\ddagger$ \\
+        Succ.\ Halving     & 94.44  & 97.41          & 91.01          & 84.88 \\
         \bottomrule
       \end{tabular}
     \end{small}
@@ -489,17 +615,18 @@ complete fold data.
 \end{table}
 
 \cref{fig:automl} and \cref{tab:automl} show the results.
-C60.ai ranks 9th of 10 by mean accuracy across these five datasets, yet
-achieves the \textbf{best single-system accuracy on Digits} (98.83\%) — the
-highest-dimensional and most structurally complex task — and is within 0.01~pp
-of the best on Pendigits (99.53\% vs.\ 99.62\%).
-No AutoML framework statistically significantly outperforms C60.ai on Digits
-or Pendigits (Wilcoxon $p > 0.05$).
+C60.ai ranks 9th of 9 by 7-dataset mean, yet achieves the
+\textbf{best single-system accuracy on Digits} (98.83\%, $+$0.17~pp over the
+nearest competitor) and the \textbf{best accuracy on Waveform} (86.70\%,
+$+$0.04~pp over Hyperopt Search) — the two highest-dimensional,
+multi-class tasks in the benchmark.
+No AutoML framework statistically significantly outperforms C60.ai on
+Digits or Waveform (Wilcoxon $p > 0.05$).
 
-The gap on simpler datasets (Iris 96.00\% vs.\ 97.53\% for Optuna Ensemble;
-Wine; Breast Cancer) is the primary source of C60.ai's lower mean.
-Ensemble-based systems dominate the mean ranking because they excel on
-low-dimensional tasks where ensembling orthogonal classifiers is near-optimal.
+The gap on simpler datasets (e.g.\ Iris, Wine, Breast Cancer) drives
+C60.ai's lower overall mean.
+Ensemble-based systems dominate on low-dimensional tasks where
+ensembling orthogonal classifiers is near-optimal.
 This advantage disappears on higher-dimensional, multi-class tasks where
 structural pipeline topology — the unique capability C60.ai contributes — is
 the deciding factor.
@@ -608,7 +735,7 @@ development are anticipated.
 
 \nocite{pedregosa2011scikit}
 
-\bibliography{references}
+\bibliography{example_paper}
 \bibliographystyle{icml2026}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

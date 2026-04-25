@@ -50,23 +50,25 @@ The search space is always `Preprocessor → FeatureSelector → Model`. Systems
 
 C60.ai leads on high-dimensional multi-class tasks where topology search matters most. It trails on simple low-dimensional datasets where linear models are near-optimal.
 
-### vs. 9 AutoML frameworks — 4 datasets, 2-fold × 2 seeds
+### vs. 9 AutoML frameworks — 7 datasets, 2-fold × 2 seeds
 
-| System | Mean Acc. | Digits | Avg Rank |
-| --- | --- | --- | --- |
-| Optuna Ensemble | 97.01% | 98.58% | 1.75 |
-| Greedy Ensemble | 96.84% | 98.66% | 2.25 |
-| FeatEng AutoML | 96.73% | 98.50% | 3.00 |
-| AutoStack | 96.72% | 97.77% | 3.50 |
-| Optuna Search | 96.62% | 97.61% | 4.50 |
-| BayesSearchCV | 96.54% | 98.19% | 4.75 |
-| **C60.ai** | **96.40%** | **98.83%** ★ | 5.25 |
-| Hyperopt Search | 95.40% | 97.22% | 7.25 |
-| Succ. Halving | 94.73% | 98.44% | 7.75 |
-| Broad Rand. | 94.12% | 97.78% | 8.00 |
+9 systems evaluated across all 7 datasets (BayesSearchCV excluded from Letter/Waveform — each fold takes 600–1200 s; its 5-dataset mean is 97.07%).
 
-★ **Best single-system accuracy on Digits across all 10 systems.**  
-No AutoML framework statistically significantly outperforms C60.ai (Wilcoxon p > 0.05).
+| System | Mean (7-ds) | Digits | Letter | Waveform |
+| --- | --- | --- | --- | --- |
+| Optuna Ensemble | 95.51% | 98.58% | 94.44% | 86.44% |
+| Greedy Ensemble | 95.48% | 98.66% | **94.76%** ‡ | 86.64% |
+| AutoStack | 95.24% | 97.77% | 94.12% | 86.07% |
+| Optuna Search | 95.21% | 97.61% | 93.86% | 86.61% |
+| FeatEng AutoML | 95.18% | 98.50% | 93.51% | 86.50% |
+| Broad Rand. | 95.12% | 97.52% | 93.55% | 86.51% |
+| Hyperopt Search | 95.05% | 97.69% | 93.75% | 86.66% |
+| **C60.ai** | **94.95%** | **98.83%** ★ | 92.84% | **86.70%** ★ |
+| Succ. Halving | 94.44% | 97.41% | 91.01% | 84.88% |
+
+★ **Best accuracy on Digits and Waveform across all 9 fully-evaluated systems.**  
+‡ Best on Letter.  
+No AutoML framework statistically significantly outperforms C60.ai on Digits or Waveform (Wilcoxon p > 0.05).
 
 Full results, plots, and statistical analysis: [`benchmark/results/`](benchmark/results/)
 
