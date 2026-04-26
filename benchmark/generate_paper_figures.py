@@ -395,62 +395,244 @@ def fig5_automl():
     print(f"Saved {path}")
 
 # ════════════════════════════════════════════════════════════════════════════
-# FIG 6  —  Simulated fitness evolution curve
+# FIG 6  —  Real fitness evolution curves (from evolution_curves.json)
 # ════════════════════════════════════════════════════════════════════════════
 def fig6_fitness_evolution():
-    rng = np.random.default_rng(42)
+    import json
+    curves_path = Path("benchmark/results/evolution_curves.json")
+    if not curves_path.exists():
+        print("evolution_curves.json not found — skipping fig6")
+        return
 
-    def simulate_fitness(start, target, n_gen, noise_std, stagnation_gens=None):
-        curve = [start]
-        for g in range(1, n_gen):
-            progress = (target - curve[-1]) * (0.3 + rng.random() * 0.3)
-            noise    = rng.normal(0, noise_std)
-            if stagnation_gens and g in stagnation_gens:
-                progress *= 0.05
-            val = min(curve[-1] + progress + noise, target + noise_std)
-            curve.append(val)
-        return np.array(curve)
+    with open(curves_path) as f:
+        raw = json.load(f)
 
-    n_gen   = 9
-    gens    = np.arange(n_gen)
-    dataset_curves = {
-        "Digits":        simulate_fitness(0.72, 0.9883, n_gen, 0.003, {4,5}),
-        "Pendigits":     simulate_fitness(0.85, 0.9953, n_gen, 0.002),
-        "Letter":        simulate_fitness(0.60, 0.9284, n_gen, 0.008, {3}),
-        "Waveform":      simulate_fitness(0.70, 0.8670, n_gen, 0.004),
-        "Iris":          simulate_fitness(0.80, 0.9600, n_gen, 0.010),
-        "Breast Cancer": simulate_fitness(0.82, 0.9499, n_gen, 0.005),
-    }
+    # Group by (variant, dataset) → list of per-run curves
+    from collections import defaultdict
+    by_vd: dict = defaultdict(list)
+    for k, v in raw.items():
+        parts = k.split("|")
+        if len(parts) == 4:
+            by_vd[(parts[0], parts[1])].append(np.array(v))
 
-    fig, axes = plt.subplots(2, 3, figsize=(12, 6), sharey=False)
-    axes = axes.flatten()
-    ds_colors = [C60_COLOR,"#E53935","#43A047","#FB8C00","#8E24AA","#00ACC1"]
+    # Use C60.ai-Full curves for the 4 well-populated datasets
+    ds_display = [
+        ("iris",          "Iris"),
+        ("wine",          "Wine"),
+        ("breast_cancer", "Breast Cancer"),
+        ("digits",        "Digits"),
+    ]
+    ds_colors = [C60_COLOR, "#E53935", "#43A047", "#FB8C00"]
 
-    for ax, (ds_name, curve), color in zip(axes, dataset_curves.items(), ds_colors):
-        final = curve[-1]
-        ax.plot(gens, curve * 100, color=color, lw=2.2, marker="o",
-                markersize=4, zorder=3)
-        ax.fill_between(gens,
-                        (curve - 0.005) * 100,
-                        (curve + 0.005) * 100,
-                        alpha=0.15, color=color)
-        ax.axhline(final * 100, color=color, lw=0.8, ls="--", alpha=0.6)
-        ax.text(n_gen - 1.2, final * 100 + 0.15, f"{final*100:.2f}%",
-                fontsize=8, color=color, fontweight="bold")
-        ax.set_title(ds_name, fontweight="bold")
+    # Check we have data; fall back to any available
+    available = {ds for (_, ds) in by_vd.keys() if ("C60.ai-Full", ds) in by_vd}
+    ds_display = [(k, lbl) for k, lbl in ds_display if k in available]
+    if not ds_display:
+        print("No real curves found — skipping fig6")
+        return
+
+    n_plots = len(ds_display)
+    ncols = min(n_plots, 4)
+    nrows = (n_plots + ncols - 1) // ncols
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(3.5 * ncols, 3.5 * nrows), squeeze=False)
+    axes_flat = axes.flatten()
+
+    for ax_idx, ((ds_key, ds_label), color) in enumerate(zip(ds_display, ds_colors)):
+        ax = axes_flat[ax_idx]
+        run_curves = [c for c in by_vd[("C60.ai-Full", ds_key)]]
+        # Pad to equal length
+        max_len = max(len(c) for c in run_curves)
+        padded = np.array([np.pad(c, (0, max_len - len(c)), mode="edge") for c in run_curves])
+
+        median_curve = np.median(padded, axis=0) * 100
+        q25_curve    = np.percentile(padded, 25, axis=0) * 100
+        q75_curve    = np.percentile(padded, 75, axis=0) * 100
+        gens         = np.arange(max_len)
+
+        ax.plot(gens, median_curve, color=color, lw=2.2, marker="o",
+                markersize=4, zorder=3, label="Median")
+        ax.fill_between(gens, q25_curve, q75_curve, alpha=0.20, color=color, label="IQR")
+
+        # Plot individual runs faintly
+        for run in padded:
+            ax.plot(gens, run * 100, color=color, lw=0.5, alpha=0.25, zorder=1)
+
+        final = median_curve[-1]
+        ax.axhline(final, color=color, lw=0.8, ls="--", alpha=0.6)
+        ax.text(max_len - 1, final + 0.25, f"{final:.2f}%",
+                fontsize=8, color=color, fontweight="bold", ha="right")
+
+        ax.set_title(ds_label, fontweight="bold")
         ax.set_xlabel("Generation")
         ax.set_ylabel("CV Accuracy (%)")
         ax.set_xticks(gens)
         ax.set_xticklabels([f"G{g}" for g in gens], fontsize=7)
-        ax.grid(True, alpha=0.2, lw=0.5)
+        ax.grid(True, alpha=0.20, lw=0.5)
+        n_runs = len(run_curves)
+        ax.text(0.03, 0.05, f"n={n_runs} runs", transform=ax.transAxes,
+                fontsize=7, color="#888")
 
-    fig.suptitle("C60.ai Fitness Evolution: Best-of-Generation Accuracy per Dataset",
-                 fontweight="bold", fontsize=12)
+    # Hide any extra subplots
+    for ax_idx in range(len(ds_display), len(axes_flat)):
+        axes_flat[ax_idx].set_visible(False)
+
+    fig.suptitle(
+        "C60.ai Fitness Evolution: Median Best-of-Generation Accuracy\n"
+        "(shaded band = interquartile range across seeds × folds)",
+        fontweight="bold", fontsize=11
+    )
     fig.tight_layout()
     path = OUT / "fig6_fitness_evolution.png"
     fig.savefig(path)
     plt.close(fig)
     print(f"Saved {path}")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# FIG 10  —  Ablation: C60.ai-Full vs C60.ai-HPO
+# ════════════════════════════════════════════════════════════════════════════
+def fig10_ablation():
+    import json
+    from scipy import stats as scipy_stats
+
+    # Load C60.ai-Full results from main ablation CSV
+    full_csv  = Path("benchmark/results/results_ablation.csv")
+    hpo_csv   = Path("benchmark/results/results_ablation_hpo.csv")
+
+    if not full_csv.exists() or not hpo_csv.exists():
+        print("Ablation CSVs not ready — skipping fig10")
+        return
+
+    full_df = pd.read_csv(full_csv)
+    hpo_df  = pd.read_csv(hpo_csv)
+
+    full_df = full_df[full_df["variant"] == "C60.ai-Full"].copy()
+    full_df["variant"] = "C60.ai-Full"
+    hpo_df["variant"]  = "C60.ai-HPO"
+
+    combined = pd.concat([full_df, hpo_df], ignore_index=True)
+
+    datasets_present = sorted(combined["dataset"].unique())
+    DS_LABELS_ABL = {
+        "iris": "Iris", "wine": "Wine",
+        "breast_cancer": "Breast\nCancer", "digits": "Digits",
+        "waveform": "Waveform", "pendigits": "Pendigits", "letter": "Letter",
+    }
+
+    means_full = {}
+    means_hpo  = {}
+    sems_full  = {}
+    sems_hpo   = {}
+    pvals      = {}
+
+    for ds in datasets_present:
+        f = combined[(combined["variant"] == "C60.ai-Full") & (combined["dataset"] == ds)]["accuracy"].astype(float)
+        h = combined[(combined["variant"] == "C60.ai-HPO")  & (combined["dataset"] == ds)]["accuracy"].astype(float)
+        if len(f) < 2 or len(h) < 2:
+            continue
+        means_full[ds] = f.mean() * 100
+        means_hpo[ds]  = h.mean() * 100
+        sems_full[ds]  = f.sem() * 100
+        sems_hpo[ds]   = h.sem() * 100
+        if len(f) == len(h):
+            _, p = scipy_stats.wilcoxon(f.values, h.values, alternative="two-sided", zero_method="wilcox")
+        else:
+            _, p = scipy_stats.mannwhitneyu(f.values, h.values, alternative="two-sided")
+        pvals[ds] = p
+
+    ds_plot = [d for d in datasets_present if d in means_full and d in means_hpo]
+    if not ds_plot:
+        print("Not enough paired data for fig10")
+        return
+
+    x = np.arange(len(ds_plot))
+    width = 0.35
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+
+    # ── Left: grouped bar comparison ────────────────────────────────────────
+    ax = axes[0]
+    bars_full = ax.bar(x - width/2,
+                       [means_full[d] for d in ds_plot],
+                       width, yerr=[sems_full[d] for d in ds_plot],
+                       label="C60.ai-Full (structural + HPO)",
+                       color=C60_COLOR, alpha=0.88,
+                       error_kw=dict(elinewidth=1.0, capsize=3),
+                       edgecolor="white")
+    bars_hpo  = ax.bar(x + width/2,
+                       [means_hpo[d] for d in ds_plot],
+                       width, yerr=[sems_hpo[d] for d in ds_plot],
+                       label="C60.ai-HPO (HPO only, fixed topology)",
+                       color="#78909C", alpha=0.80,
+                       error_kw=dict(elinewidth=1.0, capsize=3),
+                       edgecolor="white")
+
+    # Annotate p-values above paired bars
+    y_max = ax.get_ylim()[1]
+    for i, ds in enumerate(ds_plot):
+        p = pvals.get(ds, 1.0)
+        star = "***" if p < 0.001 else ("**" if p < 0.01 else ("*" if p < 0.05 else "n.s."))
+        top = max(means_full[ds] + sems_full[ds], means_hpo[ds] + sems_hpo[ds]) + 0.5
+        ax.text(i, top, star, ha="center", va="bottom", fontsize=9,
+                color="#333" if star != "n.s." else "#999")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([DS_LABELS_ABL.get(d, d) for d in ds_plot], fontsize=9)
+    ax.set_ylabel("Mean CV Accuracy (%)")
+    ax.set_title("C60.ai-Full vs C60.ai-HPO\n(* p<0.05, ** p<0.01, *** p<0.001 Wilcoxon)",
+                 fontweight="bold", fontsize=10)
+    ax.legend(fontsize=8, loc="lower right")
+    lo = min(min(means_full[d] for d in ds_plot),
+             min(means_hpo[d]  for d in ds_plot)) - 2.0
+    ax.set_ylim(lo, None)
+
+    # ── Right: accuracy gain (Full − HPO) ───────────────────────────────────
+    ax = axes[1]
+    gains = [means_full[d] - means_hpo[d] for d in ds_plot]
+    bar_colors = [GREEN_COLOR if g > 0 else RED_COLOR for g in gains]
+    bars = ax.bar(x, gains, 0.55,
+                  color=bar_colors, alpha=0.85, edgecolor="white")
+    for bar, g in zip(bars, gains):
+        sign = "+" if g >= 0 else ""
+        ax.text(bar.get_x() + bar.get_width()/2,
+                g + (0.06 if g >= 0 else -0.06),
+                f"{sign}{g:.2f}pp",
+                ha="center", va="bottom" if g >= 0 else "top",
+                fontsize=8, fontweight="bold")
+
+    ax.axhline(0, color="#666", lw=1.0)
+    ax.set_xticks(x)
+    ax.set_xticklabels([DS_LABELS_ABL.get(d, d) for d in ds_plot], fontsize=9)
+    ax.set_ylabel("Accuracy Gain (Full − HPO, pp)")
+    ax.set_title("Gain from Graph-Structural Search\n(positive = Full wins)",
+                 fontweight="bold", fontsize=10)
+    avg_gain = np.mean(gains)
+    ax.axhline(avg_gain, color=C60_COLOR, lw=1.2, ls="--", alpha=0.8)
+    ax.text(len(ds_plot) - 0.5, avg_gain + 0.05,
+            f"mean +{avg_gain:.2f}pp", ha="right", fontsize=8,
+            color=C60_COLOR, fontweight="bold")
+
+    fig.suptitle(
+        "Ablation Study: Contribution of Graph-Structural Genetic Operators",
+        fontweight="bold", fontsize=12
+    )
+    fig.tight_layout()
+    path = OUT / "fig10_ablation.png"
+    fig.savefig(path)
+    plt.close(fig)
+    print(f"Saved {path}")
+
+    # Print a summary table
+    print("\n--- Ablation Summary ---")
+    print(f"{'Dataset':<16} {'Full (%)':>10} {'HPO (%)':>10} {'Gain (pp)':>10} {'p-value':>10}")
+    print("-" * 58)
+    for ds in ds_plot:
+        p = pvals.get(ds, float("nan"))
+        print(f"{ds:<16} {means_full[ds]:>10.2f} {means_hpo[ds]:>10.2f} "
+              f"{means_full[ds]-means_hpo[ds]:>+10.2f} {p:>10.4f}")
+    overall_gain = np.mean([means_full[d] - means_hpo[d] for d in ds_plot])
+    print(f"\nMean accuracy gain from structural search: {overall_gain:+.2f} pp")
 
 # ════════════════════════════════════════════════════════════════════════════
 # FIG 7  —  Summary panel (for paper intro / overview)
@@ -556,13 +738,28 @@ def fig8_winloss():
 
 
 if __name__ == "__main__":
-    print("Generating paper figures...")
-    fig1_grouped_bar()
-    fig2_heatmap()
-    fig3_rank_scatter()
-    fig4_pipeline_dag()
-    fig5_automl()
-    fig6_fitness_evolution()
-    fig7_summary_panel()
-    fig8_winloss()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--only", nargs="+", help="Only regenerate these figures (e.g. fig6 fig10)")
+    args = parser.parse_args()
+
+    all_figs = {
+        "fig1":  fig1_grouped_bar,
+        "fig2":  fig2_heatmap,
+        "fig3":  fig3_rank_scatter,
+        "fig4":  fig4_pipeline_dag,
+        "fig5":  fig5_automl,
+        "fig6":  fig6_fitness_evolution,
+        "fig7":  fig7_summary_panel,
+        "fig8":  fig8_winloss,
+        "fig10": fig10_ablation,
+    }
+
+    to_run = args.only if args.only else list(all_figs.keys())
+    print(f"Generating figures: {to_run}")
+    for name in to_run:
+        if name in all_figs:
+            all_figs[name]()
+        else:
+            print(f"Unknown figure: {name}")
     print(f"\nAll figures saved to {OUT}/")

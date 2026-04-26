@@ -51,7 +51,10 @@ from c60.core.registry import OperationRegistry, default_registry
 from c60.evaluation.cache import EvaluationCache
 from c60.evaluation.fitness import FitnessEvaluator
 from c60.evolution.operators.crossover import SubgraphExchangeCrossover
-from c60.evolution.operators.mutation import MutationEngine
+from c60.evolution.operators.mutation import (
+    HyperparameterMutation,
+    MutationEngine,
+)
 from c60.evolution.population import Individual, Population
 from c60.evolution.selection import ElitismPreserver, TournamentSelector
 
@@ -140,6 +143,13 @@ class EvolutionEngine:
         Per-pipeline evaluation timeout in seconds.
     complexity_penalty : float
         Parsimony pressure coefficient λ.
+    structural_search : bool
+        If True (default), all five genetic operators are active including
+        graph-structural mutations (node insertion/deletion/replacement,
+        edge redirection) and subgraph crossover.
+        If False, only hyperparameter perturbation is applied and crossover
+        is disabled — producing a population-based HPO baseline that
+        searches the same topology space as fixed-template AutoML.
     registry : OperationRegistry, optional
         Defaults to default_registry.
     random_seed : int, optional
@@ -162,6 +172,7 @@ class EvolutionEngine:
         cv: int = 3,
         eval_timeout: float = 60.0,
         complexity_penalty: float = 0.005,
+        structural_search: bool = True,
         registry: Optional[OperationRegistry] = None,
         random_seed: Optional[int] = None,
     ) -> None:
@@ -178,6 +189,7 @@ class EvolutionEngine:
         self.plateau_patience = plateau_patience
         self._plateau_tolerance = plateau_tolerance
         self.task = task
+        self.structural_search = structural_search
         self.registry = registry or default_registry
 
         if random_seed is not None:
@@ -196,8 +208,20 @@ class EvolutionEngine:
         )
         self._selector = TournamentSelector(tournament_size=tournament_size)
         self._elitism = ElitismPreserver(elite_count=elite_count)
-        self._mutator = MutationEngine(registry=self.registry)
-        self._crossover = SubgraphExchangeCrossover()
+
+        if structural_search:
+            self._mutator = MutationEngine(registry=self.registry)
+            self._crossover: Optional[SubgraphExchangeCrossover] = (
+                SubgraphExchangeCrossover()
+            )
+        else:
+            # HPO-only mode: topology is fixed, only hyperparameters evolve
+            self._mutator = MutationEngine(
+                registry=self.registry,
+                operators=[HyperparameterMutation()],
+                probabilities=[1.0],
+            )
+            self._crossover = None
 
         self._log = EvolutionLog()
         self._best_pipeline: Optional[Pipeline] = None
@@ -281,9 +305,12 @@ class EvolutionEngine:
             while len(next_gen_inds) < self.population_size:
                 p1, p2 = self._selector.select_pair(pop)
 
-                # Crossover
+                # Crossover (disabled in HPO-only mode)
                 import random as _rand
-                if _rand.random() < self.crossover_rate:
+                if (
+                    self._crossover is not None
+                    and _rand.random() < self.crossover_rate
+                ):
                     child1_pipe, child2_pipe = self._crossover.apply(
                         p1.pipeline, p2.pipeline
                     )
@@ -342,9 +369,11 @@ class EvolutionEngine:
         }
 
     def __repr__(self) -> str:
+        mode = "full" if self.structural_search else "hpo-only"
         return (
             f"EvolutionEngine("
             f"pop={self.population_size}, "
             f"max_gen={self.max_generations}, "
-            f"task={self.task})"
+            f"task={self.task}, "
+            f"mode={mode})"
         )
