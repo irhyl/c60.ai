@@ -286,3 +286,13 @@ OptunaEnsemble,waveform,0,1,0.865200,32.79
 OptunaEnsemble,waveform,1,0,0.864000,1894.29
 OptunaEnsemble,waveform,1,1,0.865200,41.56
 HyperoptSearch,mnist,0,0,0.944500,2475.11
+HyperoptSearch,mnist,0,1,0.938750,4664.74
+HyperoptSearch,mnist,1,0,0.942000,2340.68
+HyperoptSearch,mnist,1,1,0.947750,3418.42
+OptunaSearch,mnist,0,0,0.944500,1432.61
+OptunaSearch,mnist,0,1,0.940750,1650.02
+OptunaSearch,mnist,1,0,0.939750,2018.32
+OptunaSearch,mnist,1,1,0.947750,1981.71
+SuccessiveHalving,mnist,0,0,0.931750,621.63
+SuccessiveHalving,mnist,0,1,0.879000,1026.52
+SuccessiveHalving,mnist,1,0,0.865250,42741.77
