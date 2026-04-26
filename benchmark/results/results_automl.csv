@@ -297,3 +297,5 @@ SuccessiveHalving,mnist,0,0,0.931750,621.63
 SuccessiveHalving,mnist,0,1,0.879000,1026.52
 SuccessiveHalving,mnist,1,0,0.865250,42741.77
 SuccessiveHalving,mnist,1,1,0.927750,1184.47
+BroadRandomSearch,mnist,0,0,0.941000,5731.46
+BroadRandomSearch,mnist,0,1,0.942250,6891.30

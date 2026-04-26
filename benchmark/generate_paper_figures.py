@@ -497,21 +497,15 @@ def fig10_ablation():
     from scipy import stats as scipy_stats
 
     # Load C60.ai-Full results from main ablation CSV
-    full_csv  = Path("benchmark/results/results_ablation.csv")
-    hpo_csv   = Path("benchmark/results/results_ablation_hpo.csv")
-
-    if not full_csv.exists() or not hpo_csv.exists():
-        print("Ablation CSVs not ready — skipping fig10")
+    ablation_csv = Path("benchmark/results/results_ablation.csv")
+    if not ablation_csv.exists():
+        print("results_ablation.csv not found — skipping fig10")
         return
 
-    full_df = pd.read_csv(full_csv)
-    hpo_df  = pd.read_csv(hpo_csv)
-
-    full_df = full_df[full_df["variant"] == "C60.ai-Full"].copy()
-    full_df["variant"] = "C60.ai-Full"
-    hpo_df["variant"]  = "C60.ai-HPO"
-
-    combined = pd.concat([full_df, hpo_df], ignore_index=True)
+    combined = pd.read_csv(ablation_csv)
+    if "C60.ai-HPO" not in combined["variant"].values:
+        print("HPO variant not yet in ablation CSV — skipping fig10")
+        return
 
     datasets_present = sorted(combined["dataset"].unique())
     DS_LABELS_ABL = {
