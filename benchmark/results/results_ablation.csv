@@ -100,3 +100,10 @@ C60.ai-HPO,digits,2,1,0.988314,38.83
 C60.ai-HPO,digits,2,2,0.989983,39.87
 C60.ai-HPO,waveform,0,0,0.866227,95.06
 C60.ai-HPO,waveform,0,1,0.864427,115.35
+C60.ai-HPO,waveform,0,2,0.873349,127.61
+C60.ai-HPO,waveform,1,0,0.860828,79.53
+C60.ai-HPO,waveform,1,1,0.872825,94.56
+C60.ai-HPO,waveform,1,2,0.864946,70.52
+C60.ai-HPO,waveform,2,0,0.869826,65.25
+C60.ai-HPO,waveform,2,1,0.868626,82.17
+C60.ai-HPO,waveform,2,2,0.868547,78.24
