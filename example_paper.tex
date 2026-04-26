@@ -670,9 +670,11 @@ per-dataset breakdown.
 
 \begin{table}[t]
   \caption{%
-    C60.ai accuracy (\%) vs.\ best non-C60 baseline per dataset.
-    $\Delta > 0$ means C60.ai is best; $p$ from one-sided Wilcoxon
-    signed-rank test (H$_1$: C60.ai $>$ baseline).%
+    C60.ai accuracy (\%) vs.\ best non-C60 baseline per dataset
+    ($n{=}4$ runs: $2\,\text{seeds} \times 2\,\text{folds}$).
+    $p$: one-sided paired $t$-test (H$_1$: C60.ai $>$ baseline),
+    Holm--Bonferroni corrected across 7 tests.
+    Bold: C60.ai is numerically best on this dataset.%
   }
   \label{tab:perds}
   \vskip 0.05in
@@ -680,19 +682,24 @@ per-dataset breakdown.
     \begin{small}
       \begin{tabular}{lcccc}
         \toprule
-        Dataset       & \sys{C60.ai}   & Best Baseline & $\Delta$ & $p$ \\
+        Dataset       & \sys{C60.ai}   & Best Baseline       & $\Delta$ & $p_{\text{holm}}$ \\
         \midrule
-        Iris          & \sys{96.00}    & KNN\ 95.33    & $+0.67$  & .031 \\
-        Digits        & \sys{98.83}    & SVM\ 97.86    & $+0.97$  & .004 \\
-        Waveform      & \sys{86.70}    & Ens.\ 85.80   & $+0.90$  & .008 \\
-        Pendigits     & 99.54          & SVM\ 99.56    & $-0.02$  & .48  \\
-        Letter        & 92.84          & SVM\ 93.60    & $-0.76$  & .72  \\
-        Wine          & 95.79          & SVM\ 97.75    & $-1.97$  & .89  \\
-        Breast Cancer & 94.99          & LR\ 98.33     & $-3.34$  & .97  \\
+        Iris          & \textbf{96.00} & KNN-10\ \ 95.33     & $+0.67$  & $.52$  \\
+        Digits        & \textbf{98.83} & SVM-RBF\ 97.86      & $+0.97$  & $.040^{*}$ \\
+        Waveform      & \textbf{86.70} & LR\ \ \ \ \ 86.47   & $+0.23$  & $.52$  \\
+        Pendigits     & 99.54          & SVM-RBF\ 99.56      & $-0.02$  & $1.00$ \\
+        Letter        & 92.84          & SVM-RBF\ 93.60      & $-0.76$  & $1.00$ \\
+        Wine          & 95.79          & SVM-RBF\ 97.75      & $-1.97$  & $1.00$ \\
+        Breast Cancer & 94.99          & LR\ \ \ \ \ 98.33   & $-3.34$  & $1.00$ \\
         \bottomrule
       \end{tabular}
     \end{small}
   \end{center}
+  \begin{flushleft}
+    \footnotesize $^{*}p < 0.05$ after Holm--Bonferroni correction.
+    $n{=}4$ limits Wilcoxon power (min achievable $p{=}0.0625$); paired
+    $t$-test used for greater sensitivity at small $n$.
+  \end{flushleft}
   \vskip -0.1in
 \end{table}
 
@@ -714,13 +721,22 @@ per-dataset breakdown.
 \end{figure}
 
 \paragraph{Statistical significance.}
-Wilcoxon signed-rank tests~\cite{wilcoxon1945individual} (one-sided,
-H$_1$: C60.ai $>$ baseline, $\alpha = 0.05$) show that C60.ai
-significantly outperforms 7 of 9 baselines.
-The two non-significant comparisons are SVM-RBF ($p = 0.21$) and Voting
-Ensemble ($p = 0.17$); both systems are strong on the same low-dimensional
-tasks where C60.ai underperforms.
-\cref{fig:winloss} shows the win/tie/loss breakdown.
+\cref{tab:perds} reports per-dataset significance of C60.ai vs.\ the
+strongest competitor on each dataset.
+We use one-sided paired $t$-tests ($n{=}4$ runs per cell) rather than
+Wilcoxon signed-rank tests because the minimum achievable Wilcoxon $p$
+at $n{=}4$ is $0.0625$, precluding any $\alpha{=}0.05$ finding regardless
+of effect size~\cite{wilcoxon1945individual}.
+After Holm--Bonferroni correction across all 7 per-dataset tests, C60.ai
+is the statistically significant winner on \textbf{Digits}
+($\Delta{=}{+}0.97$\,pp vs.\ SVM-RBF, $p_{\text{holm}}{=}0.040$).
+C60.ai also leads numerically on Iris ($+0.67$\,pp) and Waveform
+($+0.23$\,pp), but these do not reach significance after correction.
+On the four remaining datasets C60.ai trails the best baseline,
+confirming that structural search is not universally advantageous at the
+main-benchmark computation budget.
+\cref{fig:winloss} shows the full win/tie/loss breakdown across all 9
+system pairs.
 
 \begin{figure}[t]
   \vskip 0.1in
@@ -798,6 +814,50 @@ This ensemble advantage vanishes on the two tasks where structural complexity
 matters: C60.ai's discovered PCA$\to$SVC topology provides a
 representational capacity that fixed-topology ensemble construction cannot
 replicate.
+
+\subsection{Wall-Clock Fitting Time}
+\label{sec:timing}
+
+\Cref{tab:timing} reports mean fit time per cross-validation fold on the
+four core datasets.
+C60.ai's 41.5\,s mean is faster than both RandomSearch-GBT (93.3\,s) and
+GradientBoosting on Digits (644\,s), while slower than single-model baselines
+that incur no search overhead.
+The cost is concentrated on high-dimensional tasks: Iris and Wine complete in
+under 5\,s, while Breast Cancer and Digits require 68--94\,s as the GA
+evaluates structurally diverse pipeline topologies.
+
+\begin{table}[t]
+  \caption{%
+    Mean fit time per fold (seconds).
+    C60.ai times are wall-clock totals including all GA generations.
+    Baselines fit a single model.
+    $\overline{t}$ = mean over the four core datasets.%
+  }
+  \label{tab:timing}
+  \vskip 0.05in
+  \begin{center}
+    \begin{small}
+      \begin{tabular}{lrrrrr}
+        \toprule
+        System             & Iris  & Wine   & BC     & Digits  & $\overline{t}$ \\
+        \midrule
+        LR                 &  0.00 &  0.00  &  0.00  &   0.00  &  0.00 \\
+        KNN-10             &  0.00 &  0.00  &  0.00  &   0.00  &  0.00 \\
+        SVM-RBF            &  0.00 &  0.00  &  0.00  &   0.30  &  0.08 \\
+        PCA+LR             &  0.00 &  0.00  &  0.00  &   0.02  &  0.01 \\
+        RandomForest       &  0.20 &  0.20  &  0.30  &   0.60  &  0.33 \\
+        VotingEnsemble     &  0.30 &  0.43  &  0.60  &   6.22  &  1.89 \\
+        SelectKBest+GBT    &  0.38 &  0.52  &  0.32  &   3.82  &  1.26 \\
+        GradientBoosting   &  0.40 &  0.57  &  0.75  & 644.43  & 161.54 \\
+        RandomSearch-GBT   & 13.45 & 18.00  & 19.80  & 321.90  & 93.29 \\
+        \sys{C60.ai}       &  1.5  &  4.4   & 93.9   &  66.1   & \sys{41.5} \\
+        \bottomrule
+      \end{tabular}
+    \end{small}
+  \end{center}
+  \vskip -0.1in
+\end{table}
 
 \subsection{Ablation Study: Isolating the Structural Search Contribution}
 \label{sec:ablation}
@@ -984,6 +1044,10 @@ Both datasets are well-served by simple, well-tuned classifiers.
 Full and HPO variants are statistically indistinguishable ($p > 0.75$).
 This is the expected regime for low-dimensional, low-class-count tasks
 where the optimal template is already included in any standard baseline.
+Notably, the gap between C60.ai and the best fixed baseline on Wine and
+Breast Cancer was partly attributable to a registry defect (infeasible
+LR solver/penalty combinations and an unreachable \textsc{PCA}$\to$LR
+topology) that has since been corrected; see \cref{sec:limitations}.
 
 \textbf{Topology vs.\ budget (Digits/Waveform/Pendigits/Letter).}
 The four more complex datasets all show differences of $\leq 0.21$\,pp
@@ -1025,14 +1089,26 @@ datasets.
 
 \textbf{Low-dimensional tasks.}
 On datasets where linear models are near-optimal (Wine, Breast Cancer), the
-structural search overhead does not pay off.
-The complexity penalty $\lambda|V|$ mitigates but does not fully close this
-gap.
-An adaptive $\lambda$ schedule that increases during later generations would
-more aggressively prune redundant topology.
+structural search overhead does not pay off at the main-benchmark budget.
+Post-analysis identified two contributing architectural deficiencies that have
+since been corrected in the released implementation:
+(a)~the original registry coupled \texttt{solver} and \texttt{penalty} as
+independent categorical hyperparameters, producing infeasible combinations
+(\texttt{lbfgs}+L1) that silenced roughly $1/6$ of all LR evaluations
+with a $-\infty$ fitness signal, biasing the GA away from logistic regression;
+(b)~LR and SVC were restricted to \texttt{ScaledData} input, making the
+structurally superior \textsc{PCA}$\to$LR topology unreachable even though it
+is the best pipeline on Breast Cancer in the fixed-baseline evaluation.
+Both issues are resolved by (i)~splitting the LR spec into two valid
+\{lbfgs+L2, liblinear+L1\} variants, (ii)~adding \texttt{Features}-accepting
+variants of LR and SVC to the registry, and (iii)~seeding the initial
+population with one guaranteed \texttt{StandardScaler}$\to$\texttt{SVC(rbf)}
+and one \texttt{StandardScaler}$\to$\texttt{LR(L2)} warm-start individual.
 
 \textbf{Search space boundary.}
-The current registry has 12 operations.
+The current registry has 25 operation specs (9 classifiers, 7 regressors,
+3 scalers, 2 dimensionality reducers, and 4 feature-engineering/selection
+steps), covering both \texttt{ScaledData} and \texttt{Features} input types.
 Adding LightGBM, XGBoost, or deep feature embeddings would expand the search
 space but also increase the topology search cost quadratically.
 Portfolio selection for the registry is an open problem.

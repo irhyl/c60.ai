@@ -214,14 +214,83 @@ _REG_CHAINS = [
 ]
 
 
+def _make_scaled_clf_template(
+    registry: OperationRegistry,
+    scaler_name: str,
+    clf_name: str,
+    warm_params: dict,
+) -> Optional[Pipeline]:
+    """
+    Build a two-step Scaler → Classifier pipeline with specific hyperparameters.
+
+    Uses the registry to find the right specs (so default_params are applied
+    correctly) and stores only the search-space params in PipelineStep.params
+    so HyperparameterMutation can evolve them normally after seeding.
+    """
+    scaler_specs = [s for s in registry.get_by_type("scaler")
+                    if s.op_class.__name__ == scaler_name]
+    clf_specs = [s for s in registry.get_by_type("classifier")
+                 if s.op_class.__name__ == clf_name
+                 and s.input_type is ScaledData]
+    if not scaler_specs or not clf_specs:
+        return None
+
+    scaler_spec = scaler_specs[0]
+    clf_spec = clf_specs[0]
+
+    scaler_op = scaler_spec.instantiate({})
+    scaler_step = PipelineStep(
+        name=scaler_spec.op_class.__name__,
+        step_type=scaler_spec.step_type,
+        operation=scaler_op,
+        params={},
+        input_type=scaler_spec.input_type,
+        output_type=scaler_spec.output_type,
+    )
+
+    clf_op = clf_spec.instantiate(warm_params)
+    clf_step = PipelineStep(
+        name=clf_spec.op_class.__name__,
+        step_type=clf_spec.step_type,
+        operation=clf_op,
+        params=warm_params,
+        input_type=clf_spec.input_type,
+        output_type=clf_spec.output_type,
+    )
+
+    if not _compat(scaler_spec.output_type, clf_spec.input_type):
+        return None
+
+    p = Pipeline(name="Individual")
+    p.add_step(scaler_step)
+    p.add_step(clf_step)
+    p.graph.add_edge(scaler_step.id, clf_step.id)
+    return p
+
+
 def _build_templates(
     registry: OperationRegistry, task: str
 ) -> List[Pipeline]:
     """
     Build simple linear pipeline templates that serve as genetic anchors.
+
+    Always prepends two warm-start seeds (SVC-RBF and LR-L2) so the initial
+    population is guaranteed to contain known-strong baselines for scaled data.
+    The rest are type-guided random chains from _CLF_CHAINS / _REG_CHAINS.
     """
-    chains = _CLF_CHAINS if task == "classification" else _REG_CHAINS
     pipelines = []
+
+    if task == "classification":
+        # Warm-start: StandardScaler → SVC(rbf)  and  StandardScaler → LR(l2)
+        for clf_name, warm_params in [
+            ("SVC", {"kernel": "rbf", "C": 1.0, "gamma": "scale"}),
+            ("LogisticRegression", {"C": 1.0, "max_iter": 500}),
+        ]:
+            p = _make_scaled_clf_template(registry, "StandardScaler", clf_name, warm_params)
+            if p is not None:
+                pipelines.append(p)
+
+    chains = _CLF_CHAINS if task == "classification" else _REG_CHAINS
     for chain in chains:
         p = _chain_to_pipeline(registry, chain)
         if p is not None:

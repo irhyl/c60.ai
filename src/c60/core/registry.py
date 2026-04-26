@@ -255,6 +255,7 @@ _SPECS: List[OperationSpec] = [
     # -----------------------------------------------------------------------
     # Classifiers  (ScaledData | Features → ClassLabels)
     # -----------------------------------------------------------------------
+    # LR-L2: lbfgs solver, always converges on numeric data, fast on dense matrices
     OperationSpec(
         op_class=LogisticRegression,
         step_type="classifier",
@@ -262,11 +263,33 @@ _SPECS: List[OperationSpec] = [
         output_type=ClassLabels,
         search_space={
             "C": FloatRange(1e-3, 1e3, log_scale=True),
-            "penalty": Categorical(["l2", "l1"]),
-            "solver": Categorical(["lbfgs", "liblinear", "saga"]),
-            "max_iter": IntRange(100, 1000),
+            "max_iter": IntRange(200, 2000),
         },
-        default_params={"random_state": 42},
+        default_params={"solver": "lbfgs", "penalty": "l2", "random_state": 42},
+    ),
+    # LR-L1: liblinear solver, sparse solution via L1 — good when many features
+    OperationSpec(
+        op_class=LogisticRegression,
+        step_type="classifier",
+        input_type=ScaledData,
+        output_type=ClassLabels,
+        search_space={
+            "C": FloatRange(1e-3, 1e3, log_scale=True),
+            "max_iter": IntRange(200, 2000),
+        },
+        default_params={"solver": "liblinear", "penalty": "l1", "random_state": 42},
+    ),
+    # LR after dimensionality reduction or feature selection (Features input)
+    OperationSpec(
+        op_class=LogisticRegression,
+        step_type="classifier",
+        input_type=Features,
+        output_type=ClassLabels,
+        search_space={
+            "C": FloatRange(1e-3, 1e3, log_scale=True),
+            "max_iter": IntRange(200, 2000),
+        },
+        default_params={"solver": "lbfgs", "penalty": "l2", "random_state": 42},
     ),
     OperationSpec(
         op_class=RandomForestClassifier,
@@ -302,6 +325,19 @@ _SPECS: List[OperationSpec] = [
         search_space={
             "C": FloatRange(1e-2, 1e3, log_scale=True),
             "kernel": Categorical(["rbf", "linear", "poly"]),
+            "gamma": Categorical(["scale", "auto"]),
+        },
+        default_params={"random_state": 42, "probability": True},
+    ),
+    # SVC after dimensionality reduction or feature selection (Features input)
+    OperationSpec(
+        op_class=SVC,
+        step_type="classifier",
+        input_type=Features,
+        output_type=ClassLabels,
+        search_space={
+            "C": FloatRange(1e-2, 1e3, log_scale=True),
+            "kernel": Categorical(["rbf", "linear"]),
             "gamma": Categorical(["scale", "auto"]),
         },
         default_params={"random_state": 42, "probability": True},
