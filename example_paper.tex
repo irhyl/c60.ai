@@ -815,6 +815,21 @@ matters: C60.ai's discovered PCA$\to$SVC topology provides a
 representational capacity that fixed-topology ensemble construction cannot
 replicate.
 
+\subsubsection*{Comparison with FLAML}
+We additionally benchmark against FLAML~\citep{wang2021flaml}
+(v2.5.0, lgbm / xgboost / rf search, 30\,s wall-clock budget per fold) on
+the four core datasets using the same 3-fold $\times$ 3-seed protocol.
+C60.ai outperforms FLAML on every dataset
+(Iris $+1.11$\,pp, Wine $+0.66$\,pp, Breast Cancer $+0.03$\,pp,
+Digits $+1.06$\,pp; mean $+0.71$\,pp).
+FLAML's 4-dataset mean of 95.69\% falls below C60.ai's 96.40\%
+despite FLAML's substantially higher wall-clock cost
+(${\sim}1\,000$\,s per fold on Wine vs.\ 4.4\,s for C60.ai).
+Note that FLAML's internal scheduler overran the nominal 30\,s budget
+on Windows/Python 3.13 (DLL initialisation overhead for lgbm and xgboost),
+so reported fit times reflect actual wall-clock cost rather than the
+intended budget.
+
 \subsection{Wall-Clock Fitting Time}
 \label{sec:timing}
 
