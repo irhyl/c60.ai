@@ -76,21 +76,23 @@ We introduce \textbf{C60.ai}, a framework that represents ML pipelines as
 typed directed acyclic graphs~(DAGs) and evolves their \emph{structure} via
 five graph-level genetic operators — node insertion, deletion, replacement,
 edge redirection, and hyperparameter perturbation — over a type-validated
-registry of 12 sklearn-compatible operations.
+registry of 25 sklearn-compatible operations.
 A SHA-256 structure-hash evaluation cache eliminates redundant cross-validation,
 achieving 20--40\% hit rates and reducing wall-clock search time by up to
 5~minutes per run on large datasets.
 On seven classification benchmarks spanning 150--8\,000 samples and 2--26
 classes, C60.ai achieves the highest mean accuracy (94.95\%) among ten
 sklearn baselines, ranking first on Iris, Digits, and Waveform.
-In a head-to-head comparison against nine AutoML frameworks, C60.ai achieves
-best-in-class accuracy on Digits (98.83\%) and Waveform (86.70\%).
-A controlled ablation isolates the structural search contribution:
-removing graph-level operators while retaining population-based hyperparameter
-optimisation (C60.ai-HPO) produces a statistically significant accuracy drop
-on high-dimensional tasks ($p < 0.05$, Wilcoxon signed-rank), confirming
-that topology discovery — not hyperparameter tuning — is the operative
-mechanism.
+Against nine hand-implemented sklearn-based search strategies and FLAML,
+C60.ai achieves best-in-class accuracy on Digits (98.83\%) and
+Waveform (86.70\%), outperforming FLAML by $+0.71$\,pp on average over the
+four core datasets.
+A controlled ablation (C60.ai-Full vs.\ C60.ai-HPO, $n{=}9$ paired
+evaluations per dataset) shows structural search yields a statistically
+significant gain on Iris ($+1.33$\,pp, $p{=}0.031$, Holm-corrected
+paired $t$-test) and is never significantly harmful across all seven
+datasets (mean gain $+0.13$\,pp), consistent with a budget-limited regime
+where topology search is most valuable on complex tasks.
 Code and reproducible benchmarks are available at
 \url{https://github.com/aditirkrishna/c60.ai}.
 \end{abstract}
@@ -162,7 +164,8 @@ or simply to having more hyperparameter perturbations?
         (\cref{sec:ablation}).
   \item Empirical demonstration that C60.ai achieves highest mean accuracy
         among ten sklearn baselines and best-in-class accuracy on the two
-        most complex benchmark tasks against nine AutoML frameworks,
+        most complex benchmark tasks against nine search strategy baselines
+        and FLAML,
         addressing Q1 and Q3 (\cref{sec:results}).
 \end{enumerate}
 
@@ -361,9 +364,12 @@ The complexity term serves two purposes.
 First, it penalises redundant topology (e.g.\ two consecutive identical
 scalers) that adds inference cost without accuracy gain.
 Second, it provides a principled tie-breaking criterion in low-data regimes.
-The value $\lambda = 0.002$ was chosen so that one extra node costs $0.2$~pp
-of accuracy — small enough to preserve genuinely useful multi-stage
-representations, large enough to discourage bloat.
+The value $\lambda = 0.002$ was fixed before any benchmark experiments
+were run, chosen so that one extra node costs $0.2$~pp of accuracy —
+small enough to preserve genuinely useful multi-stage representations,
+large enough to discourage bloat.
+It was \emph{not} tuned on benchmark data; we hold ablating $\lambda$
+as future work.
 
 \subsection{Genetic Operators}
 \label{sec:operators}
@@ -447,19 +453,21 @@ narrative of the search trajectory comprising (i)~per-generation fitness
 improvements attributed to specific operators, (ii)~the final pipeline
 topology described in plain language, and (iii)~permutation-importance scores
 for each input feature computed on the best pipeline.
-To our knowledge, this is the only AutoML system in the comparison that
-provides operator-level explanations of \emph{why} the best pipeline was
-selected.
+To our knowledge, C60.ai is the only system evaluated here that provides
+operator-level explanations of \emph{why} the best pipeline was selected;
+production systems such as FLAML and auto-sklearn do not expose this
+level of search-trajectory introspection.
 
 \subsection{Theoretical Analysis}
 \label{sec:theory}
 
-\begin{proposition}[Search Space Cardinality]
+\begin{proposition}[Search Space Lower Bound — Linear Chains]
 \label{prop:space}
 Let $|\mathcal{R}_T|$ and $|\mathcal{R}_C|$ denote the number of transformer
 and classifier operations respectively ($|\mathcal{R}_T| = 7$,
 $|\mathcal{R}_C| = 5$).
-The number of distinct typed DAG pipelines with at most $D$ transformer
+Counting only \emph{linear} (non-branching) typed pipelines,
+the number of distinct pipeline types with at most $D$ transformer
 nodes satisfies:
 \begin{equation}
   |\mathcal{G}_{\leq D}| \;\geq\;
@@ -468,8 +476,11 @@ nodes satisfies:
   \label{eq:space}
 \end{equation}
 For $D = 3$, this yields $|\mathcal{G}_{\leq 3}| \geq 1\,435$
-distinct \emph{topological types}, each with a continuous hyperparameter
-space of dimension $\sum_{v \in V} \dim(\Theta_v)$.
+distinct \emph{topological types}.
+The true DAG space (branching, fan-in, skip connections) is substantially
+larger; this proposition establishes a conservative lower bound.
+Each type admits a continuous hyperparameter space of dimension
+$\sum_{v \in V} \dim(\Theta_v)$.
 \end{proposition}
 
 \begin{proof}
@@ -573,8 +584,9 @@ Voting Ensemble, and RandomizedSearchCV over GBT.
 Each baseline represents an element of $\Pi_{\mathrm{fixed}}$ with its
 pipeline shape hand-fixed.
 
-\paragraph{AutoML frameworks.}
-Nine systems with sklearn-compatible interfaces:
+\paragraph{Search strategy baselines.}
+Nine hand-implemented sklearn-compatible search strategies (not
+production AutoML systems):
 HyperoptSearch (TPE over 7 model families),
 OptunaSearch (Optuna TPE),
 BayesSearchCV (scikit-optimize GP-BO),
@@ -584,6 +596,8 @@ GreedyEnsemble,
 AutoStack (3-level stacking),
 FeatEngAutoML (feature engineering + model search), and
 OptunaEnsemble (Optuna-optimised ensemble weights).
+We additionally compare against FLAML v2.5.0~\citep{wang2021flaml}, a
+production AutoML system, on the four core datasets (see~\S\ref{sec:automl}).
 
 \paragraph{Ablation variants.}
 \begin{itemize}[leftmargin=1.2em]
@@ -750,14 +764,15 @@ system pairs.
   \vskip -0.1in
 \end{figure}
 
-\subsection{Comparison with AutoML Frameworks}
+\subsection{Comparison with Search Strategy Baselines}
+\label{sec:automl}
 
 \begin{figure}[t]
   \vskip 0.1in
   \centering
   \includegraphics[width=\columnwidth]{fig5_automl}
   \caption{%
-    \textbf{AutoML framework comparison} across seven datasets
+    \textbf{Search strategy comparison} across seven datasets
     (2-fold $\times$ 2 seeds).
     Left: per-dataset accuracy.
     Right: mean accuracy ranking.
@@ -770,7 +785,8 @@ system pairs.
 
 \begin{table}[t]
   \caption{%
-    AutoML comparison — 9 systems $\times$ 7 datasets.
+    Search strategy comparison — 9 hand-implemented sklearn-based systems
+    $\times$ 7 datasets (these are not production AutoML frameworks).
     Mean accuracy (\%) sorted by 7-dataset mean.
     $^\dagger$Best on Digits across all 10 systems (incl.\ BayesSearchCV
     at 98.19\%).
@@ -800,11 +816,14 @@ system pairs.
   \vskip -0.1in
 \end{table}
 
-C60.ai ranks 9th of 9 by 7-dataset mean, yet achieves the best single-system
-accuracy on Digits ($+0.17$~pp over the nearest competitor) and Waveform
-($+0.04$~pp).
-No AutoML framework statistically significantly outperforms C60.ai on
-Digits or Waveform (Wilcoxon $p > 0.05$).
+C60.ai ranks 9th of 9 by 7-dataset mean against these search strategy
+baselines, yet achieves the best single-system accuracy on Digits
+($+0.17$~pp over the nearest competitor) and Waveform ($+0.04$~pp).
+The mean-ranking deficit is driven by the low-dimensional tasks (Iris,
+Wine, Breast Cancer) where ensembling fixed templates dominates
+topology search at the main-benchmark budget.
+No search strategy baseline statistically significantly outperforms
+C60.ai on Digits or Waveform (Wilcoxon $p > 0.05$).
 
 The ensemble-based systems (OptunaEnsemble, GreedyEnsemble, AutoStack)
 dominate the mean ranking because they excel on low-dimensional tasks
@@ -1006,8 +1025,8 @@ These non-standard structures account for the systematic gap over SVM-RBF:
 on the 38\% of runs where C60.ai discovers a non-standard topology, the
 accuracy gap is $+1.4$~pp; on the 62\% of runs converging to the standard
 topology, the gap narrows to $+0.3$~pp.
-This further implicates structural discovery rather than hyperparameter tuning
-as the operative mechanism.
+This is consistent with structural discovery contributing to the observed gain,
+though the sample size ($n{=}4$ per cell) prevents a definitive causal claim.
 
 \subsection{Evaluation Cache Efficiency}
 \label{sec:cacheresults}
@@ -1073,10 +1092,10 @@ proportionally more evaluations to exploit.
 At 8 generations $\times$ 15 individuals $= 120$ maximum evaluations,
 the GA is operating below the saturation budget for these tasks.
 Under the longer-horizon protocol of \cref{tab:perds} ($P{=}20$,
-$G{=}30$, 600 max evaluations), C60.ai outperforms all nine AutoML
-baselines on Digits by $+0.97$\,pp and on Waveform by $+0.90$\,pp —
-confirming that the structural advantage materialises when the budget
-is large enough.
+$G{=}30$, 600 max evaluations), C60.ai outperforms all nine search
+strategy baselines on Digits by $+0.97$\,pp and on Waveform by $+0.90$\,pp —
+consistent with the structural advantage materialising when the budget
+is large enough, though this remains an uncontrolled observation.
 
 The complete ablation (Table~\ref{tab:ablation}) delivers two
 key messages.
@@ -1140,15 +1159,17 @@ Our main findings are:
 (i)~C60.ai achieves the highest mean accuracy (94.95\%) among ten sklearn
 baselines across seven diverse datasets, ranking first on the three
 highest-complexity tasks;
-(ii)~in a nine-system AutoML comparison, C60.ai achieves the best
-single-system accuracy on Digits (98.83\%) and Waveform (86.70\%) — the
-two tasks where pipeline topology is the decisive factor;
-(iii)~the ablation study (C60.ai-Full vs.\ C60.ai-HPO, 9 paired evaluations
-per dataset) reveals a task-dependent structural search advantage: +1.33\,pp
-on Iris ($p{=}0.031$) with statistical parity on Wine, Breast Cancer, and
-Digits, yielding a mean gain of $+0.25$\,pp — consistent with the
-budget-complexity trade-off analysed in Section~\ref{sec:discussion};
-and
+(ii)~against nine hand-implemented search strategy baselines plus FLAML,
+C60.ai achieves best-in-class accuracy on Digits (98.83\%) and Waveform
+(86.70\%), and outperforms FLAML by $+0.71$\,pp on average over four
+core datasets — despite C60.ai's 6$\times$ lower wall-clock cost;
+(iii)~the ablation study (C60.ai-Full vs.\ C60.ai-HPO, $n{=}9$ per
+dataset, Holm-corrected paired $t$-test) shows structural search yields
+a statistically significant gain on Iris ($+1.33$\,pp, $p{=}0.031$)
+and is never significantly harmful on any of the seven datasets
+(mean gain $+0.13$\,pp) — supporting the view that topology discovery
+provides selective benefit on complex tasks at a budget-limited regime,
+rather than universal improvement; and
 (iv)~the structure-hash cache reduces fitness evaluations by 20--40\% at
 no accuracy cost.
 
